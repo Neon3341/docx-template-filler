@@ -1,4 +1,4 @@
-# ComplexusThor
+# DTF: docx template filler
 
 An Electron application with React
 
