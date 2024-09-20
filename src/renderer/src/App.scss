@@ -1,0 +1,11 @@
+@import "styles";
+body {
+  box-sizing: border-box;
+  iframe {
+    display: none;
+  }
+  margin: 0;
+  background-color: #000000;
+  color: white;
+  overflow: scroll;
+}
