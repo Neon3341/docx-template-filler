@@ -9,7 +9,7 @@ const Editor = () => {
     useEffect(() => {
         if (window.electronAPI) {
             // Чтение файла через Electron API
-            window.electronAPI.readFile('G:\\Проекты - Рабочие\\docx-template-filler - templates\\шаблон_протокол.docx');
+            window.electronAPI.readFile("C:\\Users\\Danil\\Downloads\\шаблон_протокол.docx");
 
             window.electronAPI.onFileData((data) => {
                 if (data.success) {
