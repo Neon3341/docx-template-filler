@@ -41,60 +41,72 @@ const Editor = () => {
         const $preview_container = $('#docx_container_preview');
         const $links_array = $preview_container.find('a');
         let updatedFields = {}; // Объект для хранения данных в нужной структуре
-    
+
         $links_array.each(function (index, element) {
+            $(element).addClass('highlight')
             const href = $(element).attr('href');
             if (!href) return;
-    
+
             const parts = href.split(':');
             if (parts.length !== 4) return;
-    
+
             const header = parts[0];        // #DTF
             const groupName = parts[1];     // Группа
             const fieldName = parts[2];     // Название
             const fieldType = parts[3];     // Тип поля
-    
+
             if (header === "#DTF") {
                 if (!updatedFields[groupName]) {
                     updatedFields[groupName] = {};
                 }
-                updatedFields[groupName][fieldName] = fieldType;
+                if (!updatedFields[groupName][fieldType]) {
+                    updatedFields[groupName][fieldType] = {};
+                }
+                updatedFields[groupName][fieldType][fieldName] = fieldName;
             }
         });
-    
+
         // Обновляем state с новыми значениями
         setFields((prev) => ({
             ...prev,
             ...updatedFields
         }));
-    
+
         console.log("Updated fields:", updatedFields);
         update_document();
     }
-    
+
     const update_document = () => {
         const $preview_container = $('#docx_container_preview');
         const $links_array = $preview_container.find('a');
-    
+
         $links_array.each(function (index, element) {
             const href = $(element).attr('href');
             if (!href) return;
-    
+
             const parts = href.split(':');
             if (parts.length !== 4) return;
-    
+
             const header = parts[0];        // #DTF
             const groupName = parts[1];     // Группа
             const fieldName = parts[2];     // Название
             const fieldType = parts[3];     // Тип поля
-    
+
             // Находим подходящую группу и поле в объекте fields
-            if (header === "#DTF" && fields[groupName] && fields[groupName][fieldName]) {
-                const newValue = "TEST"; // Можешь заменить "TEST" на любое значение
-                $(element).text(newValue); // Заменяем текст ссылки на новое значение
+            if (header === "#DTF" && fields[groupName] && fields[groupName][fieldType][fieldName]) {
+                const newValue = fields[groupName][fieldType][fieldName];
+                $(element).text(newValue);
             }
         });
     }
+
+    const updater = () => {
+        setTimeout(function () {
+            update_document();
+            updater()
+        }, 500)
+    }
+    updater();
 
     return (
         <div id='editor' className="clearBG">
