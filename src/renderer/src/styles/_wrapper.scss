@@ -16,7 +16,15 @@ $width: 80vw;
         word-break: break-all;
     }
 
-    .highlight{
+    .highlight {
         background-color: aqua;
     }
+}
+
+.large input{
+    height: 100px !important;
+}
+
+.small input{
+    height: 30px !important;
 }

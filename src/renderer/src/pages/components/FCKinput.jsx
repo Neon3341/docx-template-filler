@@ -1,7 +1,7 @@
 import TextField from '@mui/material/TextField';
 
 
-const BackInput = ({name, label, value, onChange }) => {
+const BackInput = ({name, label, height, value, onChange }) => {
 
     return (
         <TextField
@@ -11,6 +11,7 @@ const BackInput = ({name, label, value, onChange }) => {
                 id={name}
                 value={value}
                 onChange={onChange}
+                className={height}
             />
     )
 }
