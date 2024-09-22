@@ -1,0 +1,13 @@
+.input-field {
+
+    width: 100% !important;
+
+    .Mui-focused {
+        color: #FA8127 !important;
+
+        &::after {
+            border-color: #FA8127 !important;
+        }
+    }
+
+}

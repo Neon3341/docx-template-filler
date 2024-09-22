@@ -1,5 +1,5 @@
 import React from "react"
-import BackInput from "./components/FCKinput"
+import Popup from "./components/popup"
 
 
 const Home = () => {
@@ -7,11 +7,10 @@ const Home = () => {
     return (
         <div id='home' className="clearBG">
             <h1>Главная</h1>
-            <BackInput name="ggggg" label="asdasdasdasd" height="large" onChange="" ></BackInput>
+            <Popup />
         </div>
-
-
     )
+
 }
 
 export default Home
