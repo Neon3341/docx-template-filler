@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import InputGroup from "./inputGroup"
+import InputSection from "./inputSection"
 import Title from "./title"
 import Button from "./button"
 
@@ -39,19 +39,19 @@ const Popup = () => {
         ],
         "Оборудование": [
             {
-                name: "input1",
-                label: "Поле 1",
+                name: "input3",
+                label: "Поле 3",
                 height: "large",
                 type: "text",
-                value: formData.input1,
+                value: formData.input3,
                 onChange: handleChange,
             },
             {
-                name: "input2",
-                label: "Поле 2",
+                name: "input4",
+                label: "Поле 4",
                 height: "large",
                 type: "text",
-                value: formData.input2,
+                value: formData.input4,
                 onChange: handleChange,
             }
         ]
@@ -64,9 +64,9 @@ const Popup = () => {
             <Title fontSize="20px" fontWeight="600" text="Поля для заполнения" />
             <br />
             <Title fontSize="20px" fontWeight="400" text="Название группы" />
-            <InputGroup data={InputArrayOne} />
+            {/* <InputGroup data={InputArrayOne} /> */}
+            <InputSection data={InputArrayOne} />
             <Button className="medium-gradient-btn" text="Следующий документ" />
-            <Button className="medium-blue-btn" text="Редактировать серию" />
         </div>
     )
 
