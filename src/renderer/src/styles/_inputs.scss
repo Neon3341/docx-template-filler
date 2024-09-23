@@ -11,3 +11,14 @@
     }
 
 }
+
+.inputs-section {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.inputs-block {
+    display: flex;
+    flex-direction: column;
+}
