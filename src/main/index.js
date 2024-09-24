@@ -8,6 +8,10 @@ const fs = require('fs');
 import Options from "./core/options";
 const options = new Options();
 
+import FileManager from "./core/filemanager";
+const fileManager = new FileManager(options);
+
+
 /**
  * Создание главного экрана приложения
  */
@@ -105,4 +109,11 @@ ipcMain.on('read-file', (event, filePath) => {
           //     });
       }
   });
+});
+
+ipcMain.handle("getTemplates", (event, name, value) => {
+  return fileManager.getTemplates();
+});
+ipcMain.handle("getSeries", (event, name, value) => {
+  return fileManager.getSeries();
 });

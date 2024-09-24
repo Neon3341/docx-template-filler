@@ -26,6 +26,9 @@
 
         section.docx {
             margin-left: 75px;
+            min-width: 550px;
+            width: calc(100vw - 350px - 350px) !important;
+            max-width: 800px;
         }
     }
 
@@ -35,7 +38,7 @@
         justify-items: center;
         display: flex;
         height: 100vh;
-        left: 25px;
+        left: max(25px, calc(60vw - 800px - 350px));
     }
 
     .loading_elem {
