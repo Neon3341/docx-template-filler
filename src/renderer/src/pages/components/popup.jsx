@@ -1,13 +1,14 @@
 import PopupContent from "./popupContent";
 import Button from "./button"
+import Title from "./title";
 
 
-
-const Popup = () => {
+const Popup = ({data}) => {
 
     return (
         <div className="popup">
-            <PopupContent />
+            <Title fontSize="24px" fontWeight="600" text="Поля для заполнения" />
+            <PopupContent data={data}/>
             <Button className="medium-gradient-btn" text="Следующий документ" />
         </div>
     )

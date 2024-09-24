@@ -1,19 +1,61 @@
 import React, { useEffect, useState } from 'react';
 import * as docx from 'docx-preview';
+
+import CircularProgress, {
+    circularProgressClasses
+} from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+
+import Popup from "./components/popup"
+
 import $ from "jquery";
 
 const Editor = () => {
-    const [fileContent, setFileContent] = useState('');
     const [fields, setFields] = useState('');
+
+    const [loading, setLoading] = useState(true);
+    const [loadingColor, setLoadingColor] = useState('#FF6600');
+    const [loadingBGColor, setLoadingBGColor] = useState('#222222');
+
+
+
+    const handleChange = (event) => {
+        update_document();
+        const { name, value } = event.target;
+        // Разбиваем name на части
+        var parts = name.split(":");
+        const groupName = parts[0];
+        const fieldName = parts[1];
+
+        console.log(name + ":" + value);
+
+        // Обновляем поле в нужной группе
+        setFields((prevFields) => ({
+            ...prevFields,
+            [groupName]: {
+                ...prevFields[groupName],
+                [fieldName]: {
+                    ...prevFields[groupName][fieldName],
+                    value: value
+                }
+            }
+        }));
+        console.log(fields[groupName][fieldName]);
+        update_document();
+    };
+    useEffect(() => {
+        update_document();
+        console.log(fields);
+    }, [fields]);
+
+
 
     useEffect(() => {
         if (window.electronAPI) {
-            // Чтение файла через Electron API
-            window.electronAPI.readFile("C:\\Users\\Danil\\Downloads\\шаблон_протокол.docx"); //каждый путь освоит свой
+            window.electronAPI.readFile("G:\\Проекты - Рабочие\\docx-template-filler - templates\\шаблон_протокол.docx"); //каждый путь освоит свой
 
             window.electronAPI.onFileData((data) => {
                 if (data.success) {
-                    // Рендер DOCX файла в docx_container_preview
                     const options = {
                         inWrapper: true,
                         ignoreWidth: false,
@@ -22,13 +64,14 @@ const Editor = () => {
                         renderChanges: false,
                         breakPages: true
                     };
+                    setLoadingColor("#FFFF00")
 
                     docx.renderAsync(data.content, document.getElementById("docx_container_preview"), null, options)
                         .then(() => {
-                            setFileContent(document.getElementById("docx_container_preview"));
                             load_placeholder();
                         });
                 } else {
+                    setLoadingColor("#FF0000")
                     console.error(data.message);
                 }
             });
@@ -40,7 +83,7 @@ const Editor = () => {
     const load_placeholder = () => {
         const $preview_container = $('#docx_container_preview');
         const $links_array = $preview_container.find('a');
-        let updatedFields = {}; // Объект для хранения данных в нужной структуре
+        let updatedFields = {};
 
         $links_array.each(function (index, element) {
             $(element).addClass('highlight')
@@ -55,14 +98,19 @@ const Editor = () => {
             const fieldName = parts[2];     // Название
             const fieldType = parts[3];     // Тип поля
 
+
             if (header === "#DTF") {
                 if (!updatedFields[groupName]) {
                     updatedFields[groupName] = {};
                 }
-                if (!updatedFields[groupName][fieldType]) {
-                    updatedFields[groupName][fieldType] = {};
-                }
-                updatedFields[groupName][fieldType][fieldName] = fieldName;
+                updatedFields[groupName][fieldName] = {
+                    name: groupName + ":" + fieldName,
+                    label: fieldName,
+                    height: "large",
+                    type: fieldType,
+                    value: '',
+                    onChange: handleChange,
+                };
             }
         });
 
@@ -72,13 +120,15 @@ const Editor = () => {
             ...updatedFields
         }));
 
-        console.log("Updated fields:", updatedFields);
+        // console.log("Updated fields:", updatedFields);
         update_document();
+        setLoadingBGColor("#FFFFFF")
+        setLoading(false);
     }
 
     const update_document = () => {
-        const $preview_container = $('#docx_container_preview');
-        const $links_array = $preview_container.find('a');
+        let $preview_container = $('#docx_container_preview');
+        let $links_array = $preview_container.find('a');
 
         $links_array.each(function (index, element) {
             const href = $(element).attr('href');
@@ -93,8 +143,8 @@ const Editor = () => {
             const fieldType = parts[3];     // Тип поля
 
             // Находим подходящую группу и поле в объекте fields
-            if (header === "#DTF" && fields[groupName] && fields[groupName][fieldType][fieldName]) {
-                const newValue = fields[groupName][fieldType][fieldName];
+            if (header === "#DTF" && fields[groupName] && fields[groupName][fieldName]) {
+                const newValue = fields[groupName][fieldName].value;
                 $(element).text(newValue);
             }
         });
@@ -106,13 +156,28 @@ const Editor = () => {
             updater()
         }, 500)
     }
-    updater();
 
     return (
-        <div id='editor' className="clearBG">
-            <h1>Редактор</h1>
-            <div id="docx_container_editor"></div>
-            <div id="docx_container_preview"></div>
+        <div id='editor'>
+            <div id="docx_container_editor">
+                <Popup data={fields} />
+            </div>
+            <div id="docx_container_preview" style={{ backgroundColor: loadingBGColor }}></div>
+            {loading ?
+                <Box className={"loading_elem"} sx={{ display: 'flex' }}>
+                    <CircularProgress sx={(theme) => ({
+                        color: loadingColor,
+                        animationDuration: '550ms',
+                        [`& .${circularProgressClasses.circle}`]: {
+                            strokeLinecap: 'round',
+                        },
+                        ...theme.applyStyles('dark', {
+                            color: '#308fe8',
+                        }),
+                    })} />
+                </Box>
+                : ""
+            }
         </div>
     );
 };

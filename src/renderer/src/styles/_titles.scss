@@ -2,6 +2,30 @@
     color: #232323;
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
     margin: 0;
+}
+
+.title-section {
+    color: black;
+    display: grid;
+    grid-template-rows: 2fr auto;
+    width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+
+    text-align: center;
+
+    h1 {
+        font-size: 150px;
+        font-weight: 800;
+    }
+
+    h3 {
+        font-size: 30px;
+        font-weight: 800;
+    }
 }

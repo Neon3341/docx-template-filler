@@ -1,6 +1,8 @@
 .medium-gradient-btn {
     width: 100%;
-    background: linear-gradient(45deg, rgba(252,74,26,1) 0%, rgba(247,183,51,1) 100%);
+    height: 50px;
+    align-self: flex-end;
+    background: linear-gradient(45deg, rgba(252, 74, 26, 1) 0%, rgba(247, 183, 51, 1) 100%);
     color: #fff;
     font-size: 16px;
     font-weight: lighter;
@@ -10,9 +12,23 @@
     cursor: pointer;
 }
 
+.medium-border-btn {
+    width: 100%;
+    height: 50px;
+    align-self: flex-end;
+    background-color: transparent;
+    color: #000000;
+    font-size: 16px;
+    font-weight: lighter;
+    padding: 15px 0px 15px 0px;
+    border: 1px solid #fa8127;
+    border-radius: 50px;
+    cursor: pointer;
+}
+
 .medium-blue-btn {
     width: 100%;
-    background: #5F74FF;
+    background: #5f74ff;
     color: #fff;
     font-size: 16px;
     font-weight: lighter;
@@ -20,4 +36,18 @@
     border: none;
     border-radius: 50px;
     cursor: pointer;
+}
+
+.buttons_section {
+    margin-top: 60px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 700px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+
+    button {
+        height: 85px;
+    }
 }

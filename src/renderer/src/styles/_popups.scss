@@ -4,15 +4,15 @@
     height: 750px;
     border-radius: 25px;
     box-shadow: 0px 4px 15px 0px rgba(0, 0, 0, 0.15);
-    padding: 25px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    padding: 25px 10px 25px 25px;
+    display: grid;
+    grid-template-rows: 75px 550px 75px;
     
 }
 
 .title-inputs-block {
     display: flex;
     flex-direction: column;
+    overflow-y: scroll;
     gap: 25px;
 }

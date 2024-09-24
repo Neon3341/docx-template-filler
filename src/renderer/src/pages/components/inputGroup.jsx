@@ -3,10 +3,14 @@ import InputС from './input';
 
 const InputGroup = ({ data }) => {
 
+
     return (
         <div className='inputs-block'>
-            {data.map((input, index, array) => {
-                return (<InputС name={input.name} label={input.label} height={input.height} type={input.type} value={input.value} onChange={input.onChange} />)
+            
+            { 
+            Object.entries(data).map(([key, value], index, array) => {
+                return (<InputС name={value.name} label={value.label} height={value.height} type={value.type} value={value.value} onChange={value.onChange} />)
+                
             })}
         </div>
 

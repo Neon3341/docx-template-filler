@@ -15,10 +15,21 @@
 .inputs-section {
     display: flex;
     flex-direction: column;
-    gap: 25px;
 }
 
 .inputs-block {
-    display: flex;
-    flex-direction: column;
+    padding-right: 5px;
+    display: grid;
+    align-content: space-between;
+    grid-template-columns: 1fr;
+    gap: 5px;
+    overflow-y: auto;
+    margin-bottom: 25px;
+
+    * {
+        margin-top: auto;
+        overflow: hidden;
+        height: fit-content;
+    }
+
 }

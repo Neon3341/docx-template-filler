@@ -4,7 +4,6 @@ import { NavLink } from "react-router-dom";
 const LeftMenu = () => {
   return (
     <div id="left-menu">
-      <h2>Меню</h2>
       <ul>
         <li>
           <NavLink to="/">Главная</NavLink>
