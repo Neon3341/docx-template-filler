@@ -20,11 +20,11 @@ export default function SelectLabels({ slabel, items, sonChange, currentValue })
                     onChange={sonChange}
                     
                 >
-                    <MenuItem value={''}>
+                    <MenuItem value={''} >
                         <em>None</em>
                     </MenuItem>
                     {Object.entries(items).map(([key, value], id, arr) => (
-                        <MenuItem value={key + "$$$" + value}>{key}</MenuItem>
+                        <MenuItem key={key} value={key + "$$$" + value}>{key}</MenuItem>
                     ))}
                 </Select>
 
