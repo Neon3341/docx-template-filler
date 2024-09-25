@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import * as docx from 'docx-preview';
 
+import { useSelector, useDispatch } from 'react-redux';
+import { setDocSerFields } from '../store/DocSerSlice';
+
+import { useNavigate } from 'react-router-dom';
+
 import CircularProgress, {
     circularProgressClasses
 } from '@mui/material/CircularProgress';
@@ -11,48 +16,70 @@ import Popup from "./components/popup"
 import $ from "jquery";
 
 const Editor = () => {
-    const [fields, setFields] = useState('');
 
+
+    const curDocName = useSelector((state) => state.CurDoc.name);
+    const curDocPath = useSelector((state) => state.CurDoc.path);
+    const docSerName = useSelector((state) => state.DocSer.name);
+    const docSerFields = useSelector((state) => state.DocSer.fields);
+
+    const navigate = useNavigate();
+    if (!curDocPath) {
+        navigate("/")
+    }
+
+    const dispatch = useDispatch();
+
+    const [fields, setFields] = useState('');
     const [loading, setLoading] = useState(true);
     const [loadingColor, setLoadingColor] = useState('#FF6600');
     const [loadingBGColor, setLoadingBGColor] = useState('#222222');
 
 
-
     const handleChange = (event) => {
         update_document();
         const { name, value } = event.target;
-        // Разбиваем name на части
+
         var parts = name.split(":");
         const groupName = parts[0];
         const fieldName = parts[1];
 
-        console.log(name + ":" + value);
-
-        // Обновляем поле в нужной группе
-        setFields((prevFields) => ({
-            ...prevFields,
-            [groupName]: {
-                ...prevFields[groupName],
-                [fieldName]: {
-                    ...prevFields[groupName][fieldName],
-                    value: value
+        // Используем функциональный подход в setFields, чтобы гарантировать актуальное состояние
+        setFields((prevFields) => {
+            const updatedFields = {
+                ...prevFields,
+                [groupName]: {
+                    ...prevFields[groupName],
+                    [fieldName]: {
+                        ...prevFields[groupName][fieldName],
+                        value: value
+                    }
                 }
-            }
-        }));
-        console.log(fields[groupName][fieldName]);
+            };
+
+            // Сразу вызываем dispatch с обновленным состоянием
+            dispatch(setDocSerFields(updatedFields));
+
+            return updatedFields;
+        });
+
         update_document();
     };
     useEffect(() => {
         update_document();
-        console.log(fields);
+
     }, [fields]);
+
+    // useEffect(() => {
+    //     console.log("redux docSerFields:");
+    //     console.log(docSerFields);
+    // }, [docSerFields]);
 
 
 
     useEffect(() => {
         if (window.electronAPI) {
-            window.electronAPI.readFile("G:\\Проекты - Рабочие\\docx-template-filler - templates\\шаблон_протокол.docx"); //каждый путь освоит свой
+            window.electronAPI.readFile(curDocPath); //каждый путь освоит свой
 
             window.electronAPI.onFileData((data) => {
                 if (data.success) {

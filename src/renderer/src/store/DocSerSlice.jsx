@@ -1,7 +1,8 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  DocSerName: 'Серия не выбрана!',
+  name: '',
+  paths: [],
   fields: {}
 };
 
@@ -10,13 +11,20 @@ const DocSerSlice = createSlice({
   initialState,
   reducers: {
     setDocSerName(state, action) {
-      state.DocSerName = action.payload;
+      state.name = action.payload;
+    }, 
+    setDocSerPath(state, action) {
+      state.paths.push(action.payload);
     },
     setDocSerFields(state, action) {
-      state.fields = action.payload;
+      // Обновляем только переданные поля, сохраняя остальные
+      state.fields = {
+        ...state.fields,
+        ...action.payload
+      };
     }
   },
 });
 
-export const { setDocSerName, setDocSerFields} = DocSerSlice.actions;
+export const { setDocSerName, setDocSerFields, setDocSerPath } = DocSerSlice.actions;
 export default DocSerSlice.reducer;

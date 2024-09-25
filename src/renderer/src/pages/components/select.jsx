@@ -9,7 +9,7 @@ export default function SelectLabels({ slabel, items, sonChange, currentValue })
 
 
     return (
-        <div>
+        <div className='select'>
             <FormControl sx={{ m: 1, minWidth: 120 }}>
                 <InputLabel id="demo-simple-select-helper-label">{slabel}</InputLabel>
                 <Select
@@ -18,13 +18,13 @@ export default function SelectLabels({ slabel, items, sonChange, currentValue })
                     value={currentValue}
                     label={slabel}
                     onChange={sonChange}
-                    sx={{ color: "white" }}
+                    
                 >
                     <MenuItem value={''}>
                         <em>None</em>
                     </MenuItem>
                     {Object.entries(items).map(([key, value], id, arr) => (
-                        <MenuItem value={key + ":" + value}>{key}</MenuItem>
+                        <MenuItem value={key + "$$$" + value}>{key}</MenuItem>
                     ))}
                 </Select>
 

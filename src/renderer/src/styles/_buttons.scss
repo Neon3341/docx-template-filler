@@ -47,7 +47,31 @@
     grid-template-columns: 1fr 1fr;
     gap: 30px;
 
+    
     button {
         height: 85px;
+
+        
+    }
+}
+
+#home .buttons_section_triple {
+    width: 300px;
+
+    .select {
+        width: 100%;
+        & div.MuiFormControl-root{
+            box-sizing: border-box;
+            margin: 8px 0 8px 0;
+            width: 100%;
+
+        }
+        .demo-simple-select-helper-label{
+            color: #000000 !important;
+        }
+    }
+    button:disabled {
+        filter: grayscale(100%);
+        background-color: #000000;
     }
 }

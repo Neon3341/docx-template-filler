@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  name: 'Документ не выбран!',
+  name: "",
   path: ""
 };
 
@@ -10,7 +10,7 @@ const CurDocSlice = createSlice({
   initialState,
   reducers: {
     setCurDocName(state, action) {
-      state.CurDocName = action.payload;
+      state.name = action.payload;
     },
     setCurDocPath(state, action) {
       state.path = action.payload;
