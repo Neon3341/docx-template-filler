@@ -1,7 +1,7 @@
 import InputGroup from "./inputGroup"
 import Title from "./title"
 
-const inputSection = ({ data }) => {
+const inputSection = ({ data, onChange }) => {
 
     return (
         <div className="inputs-section">
@@ -12,7 +12,7 @@ const inputSection = ({ data }) => {
                         return (
                             <div className="inputs-group">
                                 <Title fontSize="18px" fontWeight="500" text={key} />
-                                <InputGroup data={value} />
+                                <InputGroup data={value} onChange={onChange} />
                             </div>
                         )
                     }

@@ -2,7 +2,7 @@ import React, { useState } from "react"
 
 import InputSection from "./inputSection";
 
-const PopupContent = ({data}) => {
+const PopupContent = ({data, onChange}) => {
 
 
     // const [formData, setFormData] = useState({});
@@ -59,7 +59,7 @@ const PopupContent = ({data}) => {
         <div className="title-inputs-block">
             
             {/* <InputGroup data={InputArrayOne} /> */}
-            <InputSection data={data} />
+            <InputSection data={data} onChange={onChange} />
         </div>
     )
 

@@ -44,7 +44,6 @@ const Editor = () => {
         const groupName = parts[0];
         const fieldName = parts[1];
 
-        // Используем функциональный подход в setFields, чтобы гарантировать актуальное состояние
         setFields((prevFields) => {
             const updatedFields = {
                 ...prevFields,
@@ -57,7 +56,6 @@ const Editor = () => {
                 }
             };
 
-            // Сразу вызываем dispatch с обновленным состоянием
             dispatch(setDocSerFields(updatedFields));
 
             return updatedFields;
@@ -136,7 +134,6 @@ const Editor = () => {
                     height: "large",
                     type: fieldType,
                     value: '',
-                    onChange: handleChange,
                 };
             }
         });
@@ -187,7 +184,7 @@ const Editor = () => {
     return (
         <div id='editor'>
             <div id="docx_container_editor">
-                <Popup data={fields} />
+                <Popup data={fields} onChange={handleChange} />
             </div>
             <div id="docx_container_preview" style={{ backgroundColor: loadingBGColor }}></div>
             {loading ?

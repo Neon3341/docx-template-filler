@@ -1,7 +1,7 @@
 import InputС from './input';
 
 
-const InputGroup = ({ data }) => {
+const InputGroup = ({ data, onChange }) => {
 
 
     return (
@@ -9,7 +9,7 @@ const InputGroup = ({ data }) => {
             
             { 
             Object.entries(data).map(([key, value], index, array) => {
-                return (<InputС name={value.name} label={value.label} height={value.height} type={value.type} value={value.value} onChange={value.onChange} />)
+                return (<InputС name={value.name} label={value.label} height={value.height} type={value.type} value={value.value} onChange={onChange} />)
                 
             })}
         </div>
