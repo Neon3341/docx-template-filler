@@ -5,6 +5,7 @@ import Title from "./title";
 
 const Popup = ({data, onChange}) => {
 
+    
     return (
         <div className="popup">
             <Title fontSize="24px" fontWeight="600" text="Поля для заполнения" />
