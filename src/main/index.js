@@ -34,9 +34,9 @@ function createWindow() {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
       devTools: true, // when build - FALSE
-      nodeIntegration: false, // Р”РѕР»Р¶РЅРѕ Р±С‹С‚СЊ false РґР»СЏ Р±РµР·РѕРїР°СЃРЅРѕСЃС‚Рё
-      contextIsolation: true, // РћСЃС‚Р°РІР»СЏРµРј true, С‡С‚РѕР±С‹ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ contextBridge
-      enableRemoteModule: false, // Р”Р»СЏ Р±РѕР»СЊС€РµР№ Р±РµР·РѕРїР°СЃРЅРѕСЃС‚Рё
+      nodeIntegration: false, 
+      contextIsolation: true,
+      enableRemoteModule: false, 
     },
   });
 
@@ -51,9 +51,7 @@ function createWindow() {
 
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
     mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
-    if (DevWindow) {
-      DevWindow.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/dev.html`);
-    }
+
   } else {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
@@ -101,13 +99,6 @@ ipcMain.on("read-file", (event, filePath) => {
       event.reply("file-data", { success: false, message: err.message });
     } else {
       event.reply("file-data", { success: true, content: data });
-      // mammoth.convertToHtml({ buffer: data })
-      //     .then(result => {
-      //         event.reply('file-data', { success: true, content: result.value });
-      //     })
-      //     .catch(error => {
-      //         event.reply('file-data', { success: false, message: error.message });
-      //     });
     }
   });
 });
@@ -162,7 +153,7 @@ async function processDocx(docxFilePath, data) {
 
     xml2js.parseString(xml, (err, result) => {
       if (err) {
-        console.error('Ошибка парсинга XML:', err);
+        console.error('пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ XML:', err);
         return;
       }
 
@@ -188,9 +179,9 @@ async function processDocx(docxFilePath, data) {
     const outputBuffer = await zipContent.generateAsync({ type: 'nodebuffer' });
     fs.writeFileSync('C:/Users/vanya/Desktop/updated_document.docx', outputBuffer);
 
-    console.log('Обновленный файл сохранен как updated_document.docx');
+    console.log('пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ updated_document.docx');
   } catch (error) {
-    console.error('Ошибка обработки файла .docx:', error);
+    console.error('пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ .docx:', error);
   }
 }
 
