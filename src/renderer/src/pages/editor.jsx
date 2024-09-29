@@ -12,6 +12,7 @@ import CircularProgress, {
 import Box from "@mui/material/Box";
 
 import Popup from "./components/popup";
+import PopupD from "./components/documentsPopup";
 
 import $ from "jquery";
 
@@ -19,6 +20,7 @@ const Editor = () => {
   const curDocName = useSelector((state) => state.CurDoc.name);
   const curDocPath = useSelector((state) => state.CurDoc.path);
   const docSerName = useSelector((state) => state.DocSer.name);
+  const docSerPaths = useSelector((state) => state.DocSer.paths);
   const docSerFields = useSelector((state) => state.DocSer.fields);
 
   const navigate = useNavigate();
@@ -60,6 +62,20 @@ const Editor = () => {
 
     update_document();
     console.log(docSerFields);
+  };
+
+  const handleClick = (event) => {
+    var data = $(event.target).attr("data");
+
+    /**
+     * TODO write switch to next Doc + export to PDF
+     */
+    if (data !== "false") {
+      console.log("switch to next Doc!");
+    } else {
+      console.log("Export Doc to PDF!");
+    }
+
   };
 
   useEffect(() => {
@@ -189,7 +205,7 @@ const Editor = () => {
   return (
     <div id="editor">
       <div id="docx_container_editor">
-        <Popup data={fields} onChange={handleChange} />
+        <Popup data={fields} onChange={handleChange} series={docSerName} onClick={handleClick} />
       </div>
       <div
         id="docx_container_preview"
@@ -213,6 +229,12 @@ const Editor = () => {
       ) : (
         <></>
       )}
+      <div id="docx_container_docs">
+        {
+          docSerName === "fsalse" ? "" : <PopupD data={docSerPaths}/>
+        }
+
+      </div>
     </div>
   );
 };

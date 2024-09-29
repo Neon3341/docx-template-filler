@@ -27,7 +27,7 @@
         }
 
         section.docx {
-            margin-left: 75px;
+            margin-left: 0px;
             min-width: 550px;
             width: calc(100vw - 350px - 350px) !important;
             max-width: 800px;
@@ -35,13 +35,28 @@
     }
 
     #docx_container_editor {
+        top: 25px;
         position: fixed;
-        align-items: center;
+        align-items: flex-start;
         justify-items: center;
         display: flex;
         height: 100vh;
         left: max(25px, calc(60vw - 800px - 350px));
     }
+
+    
+    #docx_container_docs {
+        margin-top: auto;
+        margin-bottom: auto;
+        position: fixed;
+        align-items: flex-start;
+        justify-items: center;
+        display: flex;
+        height: 750px;
+        top: 25px;
+        right: max(25px, calc(60vw - 800px - 350px));
+    }
+
 
     .loading_elem {
         position: fixed;

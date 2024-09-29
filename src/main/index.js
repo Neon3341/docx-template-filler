@@ -30,9 +30,9 @@ function createWindow() {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
       devTools: true, // when build - FALSE
-      nodeIntegration: false, // Должно быть false для безопасности
-      contextIsolation: true, // Оставляем true, чтобы использовать contextBridge
-      enableRemoteModule: false, // Для большей безопасности
+      nodeIntegration: false, 
+      contextIsolation: true,
+      enableRemoteModule: false, 
     },
   });
 
@@ -47,9 +47,7 @@ function createWindow() {
 
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
     mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
-    if (DevWindow) {
-      DevWindow.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/dev.html`);
-    }
+
   } else {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
@@ -97,13 +95,6 @@ ipcMain.on("read-file", (event, filePath) => {
       event.reply("file-data", { success: false, message: err.message });
     } else {
       event.reply("file-data", { success: true, content: data });
-      // mammoth.convertToHtml({ buffer: data })
-      //     .then(result => {
-      //         event.reply('file-data', { success: true, content: result.value });
-      //     })
-      //     .catch(error => {
-      //         event.reply('file-data', { success: false, message: error.message });
-      //     });
     }
   });
 });
@@ -115,6 +106,95 @@ ipcMain.handle("getSeries", (event, name, value) => {
   return fileManager.getSeries();
 });
 
+const fillTemplate = (templatePath, data, outputPath) => {
+  console.log(data);
+  const content = fs.readFileSync(templatePath, "binary");
+
+  const zip = new PizZip(content);
+  const doc = new Docxtemplater(zip, {
+    paragraphLoop: true,
+    linebreaks: true,
+  });
+  doc.setData({
+    "Название котла": "Новое значение",
+  });
+
+  try {
+    doc.render();
+
+    const buf = doc.getZip().generate({ type: "nodebuffer" });
+
+    fs.writeFileSync(outputPath, buf);
+    console.log("File has been generated successfully!");
+  } catch (error) {
+    console.error("Error occurred:", error);
+  }
+};
+
+const convertToPdf = (docxPath, pdfPath) => {
+  docxToPdf(docxPath, pdfPath, (err, result) => {
+    if (err) {
+      console.error("Error converting to PDF:", err);
+    } else {
+      console.log("PDF successfully generated:", result);
+    }
+  });
+};
+
+async function processDocx(docxFilePath, data) {
+  try {
+    const zip = new JSZip();
+    const buffer = fs.readFileSync(docxFilePath);
+    const zipContent = await zip.loadAsync(buffer);
+    const xml = await zipContent.file('word/document.xml').async('string');
+
+    xml2js.parseString(xml, (err, result) => {
+      if (err) {
+        console.error('������ �������� XML:', err);
+        return;
+      }
+
+      const hyperlinks = findTags(result, 'w:hyperlink');
+      
+      hyperlinks.forEach(link => {
+        const anchor = link[0]["$"]["w:anchor"]
+       
+      });
+    });
+
+    for (const [templateField, newValue] of Object.entries(data)) {
+      console.log(templateField, newValue)
+      const xmlField = templateField.replace(/\./g, ':');
+      const regex = new RegExp(`<w:hyperlink[^>]*w:anchor="${xmlField}"[^>]*>`, 'g');
+      xml = xml.replace(regex, newValue);
+    }
+
+
+    zipContent.file('word/document.xml', xml);
+
+
+    const outputBuffer = await zipContent.generateAsync({ type: 'nodebuffer' });
+    fs.writeFileSync('C:/Users/vanya/Desktop/updated_document.docx', outputBuffer);
+
+    console.log('����������� ���� �������� ��� updated_document.docx');
+  } catch (error) {
+    console.error('������ ��������� ����� .docx:', error);
+  }
+}
+
+function findTags(obj, tagName) {
+  let results = [];
+  if (typeof obj === "object") {
+    for (let key in obj) {
+      if (key === tagName) {
+        results.push(obj[key]);
+      } else if (typeof obj[key] === "object") {
+        results = results.concat(findTags(obj[key], tagName));
+      }
+    }
+  }
+  return results;
+}
 ipcMain.handle(
   "generate-pdf",
   async (event, { templatePath, data, outputDocxPath }) => {
