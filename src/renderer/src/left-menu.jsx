@@ -21,8 +21,8 @@ const LeftMenu = () => {
 
   const handleGeneratePdf = async () => {
     const templatePath = curDocPath;
-    const outputDocxPath = "C:/Users/vanya/Desktop/Downloads/outputtt.docx"; // Нужно указать корректный путь
-    const outputPdfPath = "C:/Users/vanya/Desktop/Downloads/output.pdf"; // Нужно указать корректный путь
+    const outputDocxPath = "C:/Users/vanya/Desktop/Downloads/outputtt.docx"; 
+    const outputPdfPath = "C:/Users/vanya/Desktop/Downloads/output.pdf"; 
 
     const data = prepareData(docSerFields);
 
