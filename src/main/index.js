@@ -52,9 +52,7 @@ function createWindow() {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
 
-  mainWindow.once("ready-to-show", () => {
-    autoUpdater.checkForUpdates();
-  });
+
 }
 
 app.whenReady().then(() => {

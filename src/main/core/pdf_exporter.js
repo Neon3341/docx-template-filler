@@ -2,8 +2,6 @@ const fs = require("fs");
 const { JSDOM } = require("jsdom");
 const JSZip = require("jszip");
 const path = require("path");
-const os = require("os");
-const docxToPdf = require("docx-pdf");
 
 export default async function replaceHyperlinksInDocxAndConvertToPdf(
   inputDocxPath,
@@ -37,11 +35,22 @@ export default async function replaceHyperlinksInDocxAndConvertToPdf(
       }
     }
   }
-
+  console.log("Serialize XML");
   // Сериализация обновленного XML
   const updatedXML = dom.serialize();
 
+  console.log("Create dir in APPDATA and write new docx");
   // Создаем директорию в APPDATA и записываем новый docx файл
+
+  /**
+   * TODO @ivanchick file name "const outputDocxPath" should be compiled dynamically -> 
+   * 
+   * document_number ? 
+   * template_name + document_number 
+   * : 
+   * template_name + timestamp
+   */
+
   const outputDocxPath = path.join(
     process.env.APPDATA,
     "docx-template-filler",
@@ -52,22 +61,9 @@ export default async function replaceHyperlinksInDocxAndConvertToPdf(
   const newDocxData = await zip.generateAsync({ type: "nodebuffer" });
   fs.writeFileSync(outputDocxPath, newDocxData);
 
-  console.log("Новый .docx файл успешно создан с изменениями!");
+  console.log("DOCX saved at:", outputDocxPath);
 
-  // Создаем путь для сохранения pdf в папке "Загрузки"
-  const downloadsPath = path.join(os.homedir(), "Downloads");
-  const outputPdfPath = path.join(downloadsPath, "output.pdf");
-
-  // Конвертируем .docx в .pdf и сохраняем в папке "Загрузки"
-  docxToPdf(
-    outputDocxPath,
-    path.join(process.env.APPDATA, "docx-template-filler", "output.pdf"),
-    (err) => {
-      if (err) {
-        console.error("Ошибка конвертации в PDF:", err);
-      } else {
-        console.log('PDF файл успешно создан в папке "Загрузки"!');
-      }
-    }
-  );
+  /**
+   * PDF is not needed anymore
+   */
 }
