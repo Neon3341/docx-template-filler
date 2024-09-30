@@ -221,10 +221,13 @@ const Editor = () => {
 
     const data = prepareData(docSerFields);
 
+    const rawData = docSerFields;
+
     window.electron.ipcRenderer
       .invoke("generate-pdf", {
         templatePath,
         data,
+        rawData,
         outputDocxPath,
         outputPdfPath,
       })

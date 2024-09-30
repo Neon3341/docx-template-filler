@@ -195,9 +195,9 @@ function findTags(obj, tagName) {
 }
 ipcMain.handle(
   "generate-pdf",
-  async (event, { templatePath, data, outputDocxPath }) => {
+  async (event, { templatePath, data, rawData, outputDocxPath }) => {
     try {
-      replaceHyperlinksInDocxAndConvertToPdf(templatePath, data)
+      replaceHyperlinksInDocxAndConvertToPdf(templatePath, data, rawData)
       return { success: true, outputPath: outputDocxPath };
     } catch (error) {
       console.error("Error generating PDF:", error);

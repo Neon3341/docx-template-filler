@@ -2,10 +2,12 @@ const fs = require("fs");
 const { JSDOM } = require("jsdom");
 const JSZip = require("jszip");
 const path = require("path");
+const os = require("os")
 
 export default async function replaceHyperlinksInDocxAndConvertToPdf(
   inputDocxPath,
-  replacements
+  replacements,
+  rawData
 ) {
   // Загрузка XML файла
   const docxData = fs.readFileSync(inputDocxPath);
@@ -17,21 +19,67 @@ export default async function replaceHyperlinksInDocxAndConvertToPdf(
   // Поиск всех тегов w:hyperlink
   const hyperlinks = document.getElementsByTagName("w:hyperlink");
 
-  for (let hyperlink of hyperlinks) {
+  const hyperlinksArray = Array.from(hyperlinks); // Создаем массив для безопасной итерации
+
+  for (let hyperlink of hyperlinksArray) {
     const anchor = hyperlink.getAttribute("w:anchor");
 
     if (anchor) {
-      const cleanedAnchor = anchor
-        .replace(/^DTF:/, "")
-        .replace(/:(text|date|number)$/, "")
-        .replace(":", ".");
-      if (replacements.hasOwnProperty(cleanedAnchor)) {
-        console.log("Find:", cleanedAnchor);
-        const textNodes = hyperlink.getElementsByTagName("w:t");
+      try {
+        const cleanedAnchor = anchor
+          .replace(/^DTF:/, "")
+          .replace(/:(text|date|number)$/, "")
+          .replace(":", ".");
 
-        for (let textNode of textNodes) {
-          textNode.textContent = replacements[cleanedAnchor];
+        if (replacements.hasOwnProperty(cleanedAnchor)) {
+          console.log("Find:", cleanedAnchor);
+          const textNodes = hyperlink.getElementsByTagName("w:t");
+
+          // Замена текста в узлах w:t
+          for (let textNode of textNodes) {
+            textNode.textContent = replacements[cleanedAnchor];
+          }
+
+          try {
+            // Удаляем узел w:rStyle, если он существует
+            const rElements = hyperlink.getElementsByTagName("w:r");
+            for (let i = 0; i < rElements.length; i++) {
+              const rElement = rElements[i];
+              const rPrElements = rElement.getElementsByTagName("w:rPr");
+              for (let i = 0; i < rPrElements.length; i++) {
+                const rPrElement = rPrElements[i];
+                const rStyle = rPrElement.getElementsByTagName("w:rStyle");
+                while (rStyle.length > 0) {
+                  rPrElement.removeChild(rStyle[0]); // Удаляем все узлы w:rStyle
+                }
+              }
+            }
+
+          } catch (err) {
+            console.log("Delete w:rStyle ERROR")
+            console.error(err)
+          }
+
+          try {
+            // Сохраняем дочерние узлы в массив
+            const childNodes = Array.from(hyperlink.childNodes);
+
+            // Перемещаем дочерние узлы из w:hyperlink в родительский элемент
+            const parent = hyperlink.parentNode;
+            for (let child of childNodes) {
+              parent.insertBefore(child, hyperlink);
+            }
+
+            // Удаляем сам тег w:hyperlink
+            parent.removeChild(hyperlink);
+          } catch (err) {
+            console.log("Delete w:hyperlink ERROR")
+            console.error(err)
+          }
+
         }
+      } catch (err) {
+        console.error(err)
       }
     }
   }
@@ -39,31 +87,43 @@ export default async function replaceHyperlinksInDocxAndConvertToPdf(
   // Сериализация обновленного XML
   const updatedXML = dom.serialize();
 
-  console.log("Create dir in APPDATA and write new docx");
-  // Создаем директорию в APPDATA и записываем новый docx файл
 
-  /**
-   * TODO @ivanchick file name "const outputDocxPath" should be compiled dynamically -> 
-   * 
-   * document_number ? 
-   * template_name + document_number 
-   * : 
-   * template_name + timestamp
-   */
-
-  const outputDocxPath = path.join(
-    process.env.APPDATA,
-    "docx-template-filler",
-    "output.docx"
-  );
-  fs.mkdirSync(path.dirname(outputDocxPath), { recursive: true });
+  console.log("Compile newDocxData");
   zip.file("word/document.xml", updatedXML);
   const newDocxData = await zip.generateAsync({ type: "nodebuffer" });
+
+  console.log("Create dir in user documents and write new docx");
+
+  let documentName = "";
+
+  if (rawData["Документ"]["Номер документа"].value.length > 0) {
+    console.log(inputDocxPath.split('\\').pop().split('/').pop());
+    documentName = inputDocxPath.split('\\').pop().split('/').pop().split('.docx')[0] + "_" + rawData["Документ"]["Номер документа"].value + ".docx"
+  } else {
+    documentName = inputDocxPath.split('\\').pop().split('/').pop() + "_" + Date() + ".docx"
+  }
+
+
+  const outputDocxPath = path.join(
+    os.homedir(),
+    "Documents",
+    "DTF export",
+    documentName
+  );
+  const outputDocxPathOneDrive = path.join(
+    os.homedir(),
+    "OneDrive",
+    "Документы",
+    "DTF export",
+    documentName
+  );
+
+  fs.mkdirSync(path.dirname(outputDocxPath), { recursive: true });
   fs.writeFileSync(outputDocxPath, newDocxData);
 
-  console.log("DOCX saved at:", outputDocxPath);
+  fs.mkdirSync(path.dirname(outputDocxPathOneDrive), { recursive: true });
+  fs.writeFileSync(outputDocxPathOneDrive, newDocxData);
 
-  /**
-   * PDF is not needed anymore
-   */
+  console.log("DOCX saved at:", outputDocxPath);
+  console.log("DOCX saved at:", outputDocxPathOneDrive);
 }
