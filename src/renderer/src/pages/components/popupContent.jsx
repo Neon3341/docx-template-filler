@@ -3,6 +3,7 @@ import React from "react"
 import InputSection from "./inputSection";
 
 const PopupContent = ({data, onChange}) => {
+    console.log(data, "DATA")
 
     return (
         <div className="title-inputs-block">

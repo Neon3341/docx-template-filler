@@ -22,6 +22,100 @@ const Editor = () => {
   const docSerName = useSelector((state) => state.DocSer.name);
   const docSerPaths = useSelector((state) => state.DocSer.paths);
   const docSerFields = useSelector((state) => state.DocSer.fields);
+  
+  const loadFieldsForTemplate = (templatePath) => {
+    // Получение данных для конкретного шаблона по пути
+    return new Promise((resolve, reject) => {
+      if (window.electronAPI) {
+        window.electronAPI.readFile(templatePath);
+        window.electronAPI.onFileData((data) => {
+          if (data.success) {
+            const options = {
+              inWrapper: true,
+              ignoreWidth: false,
+              ignoreHeight: true,
+              experimental: true,
+              renderChanges: false,
+              breakPages: true,
+            };
+            
+            // Render the docx content to extract fields
+            docx.renderAsync(data.content, null, null, options).then(() => {
+              const $preview_container = $("#docx_container_preview");
+              const $links_array = $preview_container.find("a");
+              let updatedFields = {};
+              
+              // Extracting fields from the docx content
+              $links_array.each(function (index, element) {
+                $(element).addClass("highlight");
+                const href = $(element).attr("href");
+                if (!href) return;
+          
+                const parts = href.split(":");
+                if (parts.length !== 4) return;
+          
+                const header = parts[0]; // #DTF
+                const groupName = parts[1]; // Группа
+                const fieldName = parts[2]; // Название
+                const fieldType = parts[3]; // Тип поля
+          
+                if (header === "#DTF") {
+                  if (!updatedFields[groupName]) {
+                    updatedFields[groupName] = {};
+                  }
+                  updatedFields[groupName][fieldName] = {
+                    name: groupName + ":" + fieldName,
+                    label: fieldName,
+                    height: "large",
+                    type: fieldType,
+                    value: "",
+                  };
+                }
+              });
+
+              resolve(updatedFields);
+            });
+          } else {
+            reject(data.message);
+          }
+        });
+      } else {
+        reject("electronAPI is undefined");
+      }
+    });
+  };
+
+  const loadAllFields = async () => {
+    try {
+      // Loop through all template paths and gather fields
+      const allFields = {};
+      for (const path of docSerPaths) {
+        const templateFields = await loadFieldsForTemplate(path);
+        
+        // Merge each template's fields into the main object
+        Object.keys(templateFields).forEach((group) => {
+          if (!allFields[group]) {
+            allFields[group] = {};
+          }
+          Object.assign(allFields[group], templateFields[group]);
+        });
+      }
+      
+      // Dispatch all gathered fields to Redux store
+      dispatch(setDocSerFields(allFields));
+    } catch (error) {
+      console.error("Failed to load fields for all templates:", error);
+    }
+  };
+
+  // Effect to load fields whenever docSerPaths changes
+  useEffect(() => {
+    if (docSerPaths.length > 0) {
+      loadAllFields();
+    }
+    console.log(docSerPaths)
+    console.log(docSerFields)
+  }, [docSerPaths]);
 
   const navigate = useNavigate();
   if (!curDocPath) {
@@ -64,6 +158,8 @@ const Editor = () => {
     console.log(docSerFields);
   };
 
+
+
   const handleClick = (event) => {
     var data = $(event.target).attr("data");
 
@@ -76,12 +172,7 @@ const Editor = () => {
       console.log("Export Doc to PDF!");
       handleGeneratePdf();
     }
-
   };
-
-  useEffect(() => {
-    update_document();
-  }, [fields]);
 
   // useEffect(() => {
   //     console.log("redux docSerFields:");
@@ -246,7 +337,12 @@ const Editor = () => {
   return (
     <div id="editor">
       <div id="docx_container_editor">
-        <Popup data={fields} onChange={handleChange} series={docSerName} onClick={handleClick} />
+        <Popup
+          data={fields}
+          onChange={handleChange}
+          series={docSerName}
+          onClick={handleClick}
+        />
       </div>
       <div
         id="docx_container_preview"
@@ -271,10 +367,7 @@ const Editor = () => {
         <></>
       )}
       <div id="docx_container_docs">
-        {
-          docSerName === "false" ? "" : <PopupD data={docSerPaths} />
-        }
-
+        {docSerName === "false" ? "" : <PopupD data={docSerPaths} />}
       </div>
     </div>
   );
