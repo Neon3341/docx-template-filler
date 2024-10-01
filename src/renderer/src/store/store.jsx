@@ -5,7 +5,7 @@ import DocSerReducer from './DocSerSlice';
 const store = configureStore({
   reducer: {
     CurDoc: CurDocReducer,
-    DocSer: DocSerReducer,
+    DocSer: DocSerReducer
   }
 });
 

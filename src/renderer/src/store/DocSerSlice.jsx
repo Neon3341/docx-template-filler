@@ -22,13 +22,9 @@ const DocSerSlice = createSlice({
         ...state.fields,
         ...action.payload
       };
-    },
-    addNewTemplateToSeries(state, action) {
-      state.paths.push(action.payload.path);
-      state.fields[action.payload.name] = action.payload.fields || {};
     }
   },
 });
 
-export const { setDocSerName, setDocSerFields, setDocSerPath, addNewTemplateToSeries } = DocSerSlice.actions;
+export const { setDocSerName, setDocSerFields, setDocSerPath } = DocSerSlice.actions;
 export default DocSerSlice.reducer;
