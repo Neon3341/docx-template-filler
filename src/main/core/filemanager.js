@@ -20,7 +20,7 @@ export default class FileManager {
             try {
                 fs.mkdirSync(`${process.env.APPDATA}/docx-template-filler/templates/`, { recursive: true });
                 this.#options.setOption('files.templateFolder', `${process.env.APPDATA}/docx-template-filler/templates/`)
-                this.#templatesFolder = `${process.env.APPDATA}/docx-template-filler/templates/`;
+                this.#templatesFolder = `${process.env.APPDATA}\\docx-template-filler\\templates\\`;
             } catch (err) {
                 throw new Error("Error occurred at FileManager constructor: " + err);
             }
@@ -52,10 +52,15 @@ export default class FileManager {
                 if (path.extname(file) === '.json') {
                     try {
                         const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-
-                        if (data.DTF === true) {
-                            series[file] = filePath;
+                        if (!series[file]) {
+                            series[file] = {};
                         }
+                        series[file]['path'] = filePath;
+                        data.map((value, index) => {
+                            data[index] = this.#templatesFolder+value
+                        })
+                        series[file]['templatesPaths'] = data;
+                        
                     } catch (error) {
                         console.error(`Error reading or parsing JSON file ${file}:`, error);
                     }
@@ -65,7 +70,6 @@ export default class FileManager {
         } catch (error) {
             console.error('Error reading series folder:', error);
         }
-
         return series;
     }
 }

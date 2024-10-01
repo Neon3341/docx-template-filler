@@ -44,76 +44,84 @@ const Editor = () => {
       if (window.electron.ipcRenderer) {
         for (let i = 0; i < docSerPaths.length; i++) {
           const docSerPath = docSerPaths[i];
-          window.electronAPI.readFile(docSerPath);
-          window.electronAPI.onFileData((data) => {
-            console.log(data);
-            if (data.success) {
-              let dataName = docSerPath.split('\\').pop().split('/').pop().split('.docx')[0];
-              if (!document.getElementById(dataName)) {
-                var previewSection = document.getElementById("docx_container_preview");
-                var child = document.createElement("div");
-                child.id = dataName;
-                previewSection.appendChild(child);
-                let updatedFields = {};
-                updatedFields[docSerPath] = data.content;
-                const options = {
-                  inWrapper: true,
-                  ignoreWidth: false,
-                  ignoreHeight: true,
-                  experimental: true,
-                  renderChanges: false,
-                  breakPages: true,
-                  renderChanges: true,
-                };
-                docx.renderAsync(
-                  data.content,
-                  document.getElementById(dataName),
-                  null,
-                  options
-                ).then(() => {
-                  update_document();
-                  setLoadingBGColor("#FFFFFF");
-                  setLoading(false);
-                  setLoadingColor("#FFFF00");
-                  load_placeholder();
-          
-                  update_document();
-                  setLoadingBGColor("#FFFFFF");
-                  setLoading(false);
-                })
-              }
-            } else {
-              setLoadingColor("#FF0000");
-              console.error(data.message);
-            }
-          })
+          // window.electronAPI.readFile(docSerPath);
+          window.electron.ipcRenderer
+            .invoke("read-file-sync", docSerPath)
+            .then((data) => {
+              if (data.success) {
+                let dataName = docSerPath
+                  .split("\\")
+                  .pop()
+                  .split("/")
+                  .pop()
+                  .split(".docx")[0];
+                if (!document.getElementById(dataName)) {
+                  var previewSection = document.getElementById(
+                    "docx_container_preview"
+                  );
+                  var child = document.createElement("div");
+                  child.id = dataName;
+                  previewSection.appendChild(child);
+                  let updatedFields = {};
+                  updatedFields[docSerPath] = data.content;
+                  const options = {
+                    inWrapper: true,
+                    ignoreWidth: false,
+                    ignoreHeight: true,
+                    experimental: true,
+                    renderChanges: false,
+                    breakPages: true,
+                    renderChanges: true,
+                  };
+                  docx
+                    .renderAsync(
+                      data.content,
+                      document.getElementById(dataName),
+                      null,
+                      options
+                    )
+                    .then(() => {
+                      update_document();
+                      setLoadingBGColor("#FFFFFF");
+                      setLoading(false);
+                      setLoadingColor("#FFFF00");
+                      load_placeholder();
 
+                      update_document();
+                      setLoadingBGColor("#FFFFFF");
+                      setLoading(false);
+                    });
+                }
+              } else {
+                setLoadingColor("#FF0000");
+                console.error(data.message);
+              }
+            });
+          // window.electronAPI.onFileData((data) => {});
         }
       } else {
         console.error("electronAPI is undefined");
       }
-    },
-      []);
+    }, []);
   };
 
-
-  loadDocs()
+  loadDocs();
   useEffect(() => {
-    console.log("useEffect - documentsContent");
-    console.log(documentsContent);
-    console.log(docSerPaths.length);
-    console.log(DataProcessState);
     if (docSerPaths.length === DataProcessState) {
-      renderPreview()
+      renderPreview();
     }
-  },
-    [documentsContent]);
+  }, [documentsContent]);
 
   const renderPreview = async () => {
     for (let i = 0; i < docSerPaths.length; i++) {
       const docSerPath = docSerPaths[i];
       const documentContent = documentsContent[docSerPath];
-      let dataName = docSerPath.split('\\').pop().split('/').pop().split('.docx')[0];
+      let dataName = docSerPath
+        .split("\\")
+        .pop()
+        .split("/")
+        .pop()
+        .split(".docx")[0];
 
       const options = {
         inWrapper: true,
@@ -124,14 +132,16 @@ const Editor = () => {
         breakPages: true,
         renderChanges: true,
       };
-      await docx.renderAsync(
-        documentContent,
-        document.getElementById(dataName),
-        null,
-        options
-      ).then(() => {
-        taskManagerState++;
-      })
+      await docx
+        .renderAsync(
+          documentContent,
+          document.getElementById(dataName),
+          null,
+          options
+        )
+        .then(() => {
+          taskManagerState++;
+        });
 
       if (docSerPaths.length === taskManagerState) {
         setLoadingColor("#FFFF00");
@@ -142,7 +152,7 @@ const Editor = () => {
         setLoading(false);
       }
     }
-  }
+  };
 
   const load_placeholder = () => {
     const $preview_container = $("#docx_container_preview");
@@ -161,6 +171,18 @@ const Editor = () => {
       const groupName = parts[1]; // Группа
       const fieldName = parts[2]; // Название
       const fieldType = parts[3]; // Тип поля
+      let finalFieldType = fieldType;
+      let options = [];
+      if (fieldType.split("/")[0] == "select") {
+        finalFieldType = "select";
+        fieldType
+          .split("/")[1]
+          .split("|")
+          .map((option) => {
+            options.push(option);
+          });
+
+      }
 
       if (header === "#DTF") {
         if (!updatedFields[groupName]) {
@@ -170,8 +192,9 @@ const Editor = () => {
           name: groupName + ":" + fieldName,
           label: fieldName,
           height: "large",
-          type: fieldType,
+          type: finalFieldType,
           value: "",
+          options: options,
         };
       }
     });
@@ -243,32 +266,17 @@ const Editor = () => {
     });
 
     update_document();
-    console.log(docSerFields);
   };
 
   const handleClick = (event) => {
     var data = $(event.target).attr("data");
-
-    /**
-     * TODO write switch to next Doc
-     */
-    if (data !== "false") {
-      console.log("switch to next Doc!");
-    } else {
-      console.log("Export Doc to PDF!");
-      handleGenerateDocx();
-    }
-
+    handleGenerateDocx();
   };
-
-
 
   // useEffect(() => {
   //     console.log("redux docSerFields:");
   //     console.log(docSerFields);
   // }, [docSerFields]);
-
-
 
   const updater = () => {
     setTimeout(function () {
@@ -289,34 +297,40 @@ const Editor = () => {
   };
 
   const handleGenerateDocx = async () => {
-    const templatePath = curDocPath;
-
     const data = prepareData(docSerFields);
 
     const rawData = docSerFields;
 
-    window.electron.ipcRenderer
-      .invoke("generate-pdf", {
-        templatePath,
-        data,
-        rawData
-      })
-      .then((result) => {
-        if (result.success) {
-          console.log("PDF successfully generated at:", result.pdfPath);
-        } else {
-          console.error("Error generating PDF:", result.error);
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to generate PDF:", error);
-      });
+    docSerPaths.map((value, index) => {
+      const templatePath = docSerPaths[index];
+      window.electron.ipcRenderer
+        .invoke("generate-pdf", {
+          templatePath,
+          data,
+          rawData,
+        })
+        .then((result) => {
+          if (result.success) {
+            console.log("PDF successfully generated at:", result.pdfPath);
+          } else {
+            console.error("Error generating PDF:", result.error);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to generate PDF:", error);
+        });
+    });
   };
 
   return (
     <div id="editor">
       <div id="docx_container_editor">
-        <Popup data={fields} onChange={handleChange} series={docSerName} onClick={handleClick} />
+        <Popup
+          data={fields}
+          onChange={handleChange}
+          series={docSerName}
+          onClick={handleClick}
+        />
       </div>
       <div
         id="docx_container_preview"
@@ -341,10 +355,7 @@ const Editor = () => {
         <></>
       )}
       <div id="docx_container_docs">
-        {
-          docSerName === "false" ? "" : <PopupD data={docSerPaths} />
-        }
-
+        {docSerName === "false" ? "" : <PopupD data={docSerPaths} />}
       </div>
     </div>
   );

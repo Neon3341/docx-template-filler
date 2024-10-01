@@ -7,7 +7,6 @@ const PopupD = ({ data, onClick }) => {
 
     const scrollToDocument = (event) => {
         const blockID = event.target.getAttribute('data').split('\\').pop().split('/').pop().split('.docx')[0];
-        console.log(blockID);
         document.getElementById(blockID).scrollIntoView({
             behavior: 'smooth',
             block: 'start'

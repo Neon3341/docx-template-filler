@@ -9,6 +9,7 @@ export default async function replaceHyperlinksInDocxAndConvertToPdf(
   replacements,
   rawData
 ) {
+  console.log(replacements)
   // Загрузка XML файла
   const docxData = fs.readFileSync(inputDocxPath);
   const zip = await JSZip.loadAsync(docxData);
@@ -28,7 +29,7 @@ export default async function replaceHyperlinksInDocxAndConvertToPdf(
       try {
         const cleanedAnchor = anchor
           .replace(/^DTF:/, "")
-          .replace(/:(text|date|number)$/, "")
+          .replace(/:(text|date|number|select).*$/, "")
           .replace(":", ".");
 
         if (replacements.hasOwnProperty(cleanedAnchor)) {

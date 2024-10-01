@@ -47,12 +47,9 @@ function createWindow() {
 
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
     mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
-
   } else {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
-
-
 }
 
 app.whenReady().then(() => {
@@ -88,7 +85,7 @@ ipcMain.handle("setOption", (event, name, value) => {
 });
 
 ipcMain.on("read-file", (event, filePath) => {
-  const id = filePath.split('\\').pop().split('/').pop().split('.docx')[0];
+  const id = filePath.split("\\").pop().split("/").pop().split(".docx")[0];
   fs.readFile(filePath, (err, data) => {
     if (err) {
       event.reply("file-data", { success: false, message: err.message });
@@ -98,6 +95,11 @@ ipcMain.on("read-file", (event, filePath) => {
   });
 });
 
+ipcMain.handle("read-file-sync", (event, filePath) => {
+  const id = filePath.split("\\").pop().split("/").pop().split(".docx")[0];
+  const data = fs.readFileSync(filePath);
+  return { success: true, content: data };
+});
 
 ipcMain.handle("getTemplates", (event, name, value) => {
   return fileManager.getTemplates();
@@ -146,39 +148,42 @@ async function processDocx(docxFilePath, data) {
     const zip = new JSZip();
     const buffer = fs.readFileSync(docxFilePath);
     const zipContent = await zip.loadAsync(buffer);
-    const xml = await zipContent.file('word/document.xml').async('string');
+    const xml = await zipContent.file("word/document.xml").async("string");
 
     xml2js.parseString(xml, (err, result) => {
       if (err) {
-        console.error('������ �������� XML:', err);
+        console.error("������ �������� XML:", err);
         return;
       }
 
-      const hyperlinks = findTags(result, 'w:hyperlink');
+      const hyperlinks = findTags(result, "w:hyperlink");
 
-      hyperlinks.forEach(link => {
-        const anchor = link[0]["$"]["w:anchor"]
-
+      hyperlinks.forEach((link) => {
+        const anchor = link[0]["$"]["w:anchor"];
       });
     });
 
     for (const [templateField, newValue] of Object.entries(data)) {
-      console.log(templateField, newValue)
-      const xmlField = templateField.replace(/\./g, ':');
-      const regex = new RegExp(`<w:hyperlink[^>]*w:anchor="${xmlField}"[^>]*>`, 'g');
+      console.log(templateField, newValue);
+      const xmlField = templateField.replace(/\./g, ":");
+      const regex = new RegExp(
+        `<w:hyperlink[^>]*w:anchor="${xmlField}"[^>]*>`,
+        "g"
+      );
       xml = xml.replace(regex, newValue);
     }
 
+    zipContent.file("word/document.xml", xml);
 
-    zipContent.file('word/document.xml', xml);
+    const outputBuffer = await zipContent.generateAsync({ type: "nodebuffer" });
+    fs.writeFileSync(
+      "C:/Users/vanya/Desktop/updated_document.docx",
+      outputBuffer
+    );
 
-
-    const outputBuffer = await zipContent.generateAsync({ type: 'nodebuffer' });
-    fs.writeFileSync('C:/Users/vanya/Desktop/updated_document.docx', outputBuffer);
-
-    console.log('����������� ���� �������� ��� updated_document.docx');
+    console.log("����������� ���� �������� ��� updated_document.docx");
   } catch (error) {
-    console.error('������ ��������� ����� .docx:', error);
+    console.error("������ ��������� ����� .docx:", error);
   }
 }
 
@@ -199,7 +204,7 @@ ipcMain.handle(
   "generate-pdf",
   async (event, { templatePath, data, rawData, outputDocxPath }) => {
     try {
-      replaceHyperlinksInDocxAndConvertToPdf(templatePath, data, rawData)
+      replaceHyperlinksInDocxAndConvertToPdf(templatePath, data, rawData);
       return { success: true, outputPath: outputDocxPath };
     } catch (error) {
       console.error("Error generating PDF:", error);
