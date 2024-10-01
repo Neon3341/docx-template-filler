@@ -47,8 +47,9 @@ const Home = () => {
             dispatch(setCurDocName(parts[0]));
             dispatch(setCurDocPath(parts[1]));
             dispatch(setDocSerPath(parts[1]));
+            dispatch(setDocSerPath("C:\\Users\\et010\\AppData\\Roaming\\docx-template-filler\\templates\\шаблон_проверки.docx"));
         }
-        dispatch(setDocSerName("false"));
+        dispatch(setDocSerName("тестовая серия"));
     };
 
     useEffect(() => {

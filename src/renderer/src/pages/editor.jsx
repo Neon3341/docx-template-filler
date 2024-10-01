@@ -34,6 +34,188 @@ const Editor = () => {
   const [loading, setLoading] = useState(true);
   const [loadingColor, setLoadingColor] = useState("#FF6600");
   const [loadingBGColor, setLoadingBGColor] = useState("#222222");
+  const [documentsContent, setDocumentsContent] = useState({});
+
+  let DataProcessState = 0;
+  let taskManagerState = 0;
+
+  const loadDocs = () => {
+    useEffect(() => {
+      if (window.electron.ipcRenderer) {
+        for (let i = 0; i < docSerPaths.length; i++) {
+          const docSerPath = docSerPaths[i];
+          window.electronAPI.readFile(docSerPath);
+          window.electronAPI.onFileData((data) => {
+            console.log(data);
+            if (data.success) {
+              let dataName = docSerPath.split('\\').pop().split('/').pop().split('.docx')[0];
+              if (!document.getElementById(dataName)) {
+                var previewSection = document.getElementById("docx_container_preview");
+                var child = document.createElement("div");
+                child.id = dataName;
+                previewSection.appendChild(child);
+                let updatedFields = {};
+                updatedFields[docSerPath] = data.content;
+                const options = {
+                  inWrapper: true,
+                  ignoreWidth: false,
+                  ignoreHeight: true,
+                  experimental: true,
+                  renderChanges: false,
+                  breakPages: true,
+                  renderChanges: true,
+                };
+                docx.renderAsync(
+                  data.content,
+                  document.getElementById(dataName),
+                  null,
+                  options
+                ).then(() => {
+                  update_document();
+                  setLoadingBGColor("#FFFFFF");
+                  setLoading(false);
+                  setLoadingColor("#FFFF00");
+                  load_placeholder();
+          
+                  update_document();
+                  setLoadingBGColor("#FFFFFF");
+                  setLoading(false);
+                })
+              }
+            } else {
+              setLoadingColor("#FF0000");
+              console.error(data.message);
+            }
+          })
+
+        }
+      } else {
+        console.error("electronAPI is undefined");
+      }
+    },
+      []);
+  };
+
+
+  loadDocs()
+  useEffect(() => {
+    console.log("useEffect - documentsContent");
+    console.log(documentsContent);
+    console.log(docSerPaths.length);
+    console.log(DataProcessState);
+    if (docSerPaths.length === DataProcessState) {
+      renderPreview()
+    }
+  },
+    [documentsContent]);
+
+  const renderPreview = async () => {
+    for (let i = 0; i < docSerPaths.length; i++) {
+      const docSerPath = docSerPaths[i];
+      const documentContent = documentsContent[docSerPath];
+      let dataName = docSerPath.split('\\').pop().split('/').pop().split('.docx')[0];
+
+      const options = {
+        inWrapper: true,
+        ignoreWidth: false,
+        ignoreHeight: true,
+        experimental: true,
+        renderChanges: false,
+        breakPages: true,
+        renderChanges: true,
+      };
+      await docx.renderAsync(
+        documentContent,
+        document.getElementById(dataName),
+        null,
+        options
+      ).then(() => {
+        taskManagerState++;
+      })
+
+      if (docSerPaths.length === taskManagerState) {
+        setLoadingColor("#FFFF00");
+        load_placeholder();
+
+        update_document();
+        setLoadingBGColor("#FFFFFF");
+        setLoading(false);
+      }
+    }
+  }
+
+  const load_placeholder = () => {
+    const $preview_container = $("#docx_container_preview");
+    const $links_array = $preview_container.find("a");
+    let updatedFields = {};
+
+    $links_array.each(function (index, element) {
+      $(element).addClass("highlight");
+      const href = $(element).attr("href");
+      if (!href) return;
+
+      const parts = href.split(":");
+      if (parts.length !== 4) return;
+
+      const header = parts[0]; // #DTF
+      const groupName = parts[1]; // Группа
+      const fieldName = parts[2]; // Название
+      const fieldType = parts[3]; // Тип поля
+
+      if (header === "#DTF") {
+        if (!updatedFields[groupName]) {
+          updatedFields[groupName] = {};
+        }
+        updatedFields[groupName][fieldName] = {
+          name: groupName + ":" + fieldName,
+          label: fieldName,
+          height: "large",
+          type: fieldType,
+          value: "",
+        };
+      }
+    });
+    setFields((prev) => ({
+      ...prev,
+      ...updatedFields,
+    }));
+
+    update_document();
+    setLoadingBGColor("#FFFFFF");
+    setLoading(false);
+  };
+
+  const update_document = () => {
+    let $preview_container = $("#docx_container_preview");
+    let $links_array = $preview_container.find("a");
+
+    $links_array.each(function (index, element) {
+      const href = $(element).attr("href");
+      if (!href) return;
+
+      const parts = href.split(":");
+      if (parts.length !== 4) return;
+
+      const header = parts[0]; // #DTF
+      const groupName = parts[1]; // Группа
+      const fieldName = parts[2]; // Название
+      const fieldType = parts[3]; // Тип поля
+
+      // Находим подходящую группу и поле в объекте fields
+      if (
+        header === "#DTF" &&
+        fields[groupName] &&
+        fields[groupName][fieldName]
+      ) {
+        const newValue = fields[groupName][fieldName].value;
+        $(element).text(newValue);
+      }
+    });
+  };
+
+  useEffect(() => {
+    update_document();
+  }, [fields]);
 
   const handleChange = (event) => {
     update_document();
@@ -74,127 +256,19 @@ const Editor = () => {
       console.log("switch to next Doc!");
     } else {
       console.log("Export Doc to PDF!");
-      handleGeneratePdf();
+      handleGenerateDocx();
     }
 
   };
 
-  useEffect(() => {
-    update_document();
-  }, [fields]);
+
 
   // useEffect(() => {
   //     console.log("redux docSerFields:");
   //     console.log(docSerFields);
   // }, [docSerFields]);
 
-  useEffect(() => {
-    if (window.electronAPI) {
-      window.electronAPI.readFile(curDocPath); //каждый путь освоит свой
 
-      window.electronAPI.onFileData((data) => {
-        if (data.success) {
-          const options = {
-            inWrapper: true,
-            ignoreWidth: false,
-            ignoreHeight: true,
-            experimental: true,
-            renderChanges: false,
-            breakPages: true,
-          };
-          setLoadingColor("#FFFF00");
-
-          docx
-            .renderAsync(
-              data.content,
-              document.getElementById("docx_container_preview"),
-              null,
-              options
-            )
-            .then(() => {
-              load_placeholder();
-            });
-        } else {
-          setLoadingColor("#FF0000");
-          console.error(data.message);
-        }
-      });
-    } else {
-      console.error("electronAPI is undefined");
-    }
-  }, []);
-
-  const load_placeholder = () => {
-    const $preview_container = $("#docx_container_preview");
-    const $links_array = $preview_container.find("a");
-    let updatedFields = {};
-
-    $links_array.each(function (index, element) {
-      $(element).addClass("highlight");
-      const href = $(element).attr("href");
-      if (!href) return;
-
-      const parts = href.split(":");
-      if (parts.length !== 4) return;
-
-      const header = parts[0]; // #DTF
-      const groupName = parts[1]; // Группа
-      const fieldName = parts[2]; // Название
-      const fieldType = parts[3]; // Тип поля
-
-      if (header === "#DTF") {
-        if (!updatedFields[groupName]) {
-          updatedFields[groupName] = {};
-        }
-        updatedFields[groupName][fieldName] = {
-          name: groupName + ":" + fieldName,
-          label: fieldName,
-          height: "large",
-          type: fieldType,
-          value: "",
-        };
-      }
-    });
-
-    // Обновляем state с новыми значениями
-    setFields((prev) => ({
-      ...prev,
-      ...updatedFields,
-    }));
-
-    // console.log("Updated fields:", updatedFields);
-    update_document();
-    setLoadingBGColor("#FFFFFF");
-    setLoading(false);
-  };
-
-  const update_document = () => {
-    let $preview_container = $("#docx_container_preview");
-    let $links_array = $preview_container.find("a");
-
-    $links_array.each(function (index, element) {
-      const href = $(element).attr("href");
-      if (!href) return;
-
-      const parts = href.split(":");
-      if (parts.length !== 4) return;
-
-      const header = parts[0]; // #DTF
-      const groupName = parts[1]; // Группа
-      const fieldName = parts[2]; // Название
-      const fieldType = parts[3]; // Тип поля
-
-      // Находим подходящую группу и поле в объекте fields
-      if (
-        header === "#DTF" &&
-        fields[groupName] &&
-        fields[groupName][fieldName]
-      ) {
-        const newValue = fields[groupName][fieldName].value;
-        $(element).text(newValue);
-      }
-    });
-  };
 
   const updater = () => {
     setTimeout(function () {
@@ -214,10 +288,8 @@ const Editor = () => {
     return preparedData;
   };
 
-  const handleGeneratePdf = async () => {
+  const handleGenerateDocx = async () => {
     const templatePath = curDocPath;
-    const outputDocxPath = "C:/Users/vanya/Desktop/Downloads/outputtt.docx";
-    const outputPdfPath = "C:/Users/vanya/Desktop/Downloads/output.pdf";
 
     const data = prepareData(docSerFields);
 
@@ -227,9 +299,7 @@ const Editor = () => {
       .invoke("generate-pdf", {
         templatePath,
         data,
-        rawData,
-        outputDocxPath,
-        outputPdfPath,
+        rawData
       })
       .then((result) => {
         if (result.success) {

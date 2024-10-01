@@ -30,9 +30,9 @@ function createWindow() {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
       devTools: true, // when build - FALSE
-      nodeIntegration: false, 
+      nodeIntegration: false,
       contextIsolation: true,
-      enableRemoteModule: false, 
+      enableRemoteModule: false,
     },
   });
 
@@ -88,6 +88,7 @@ ipcMain.handle("setOption", (event, name, value) => {
 });
 
 ipcMain.on("read-file", (event, filePath) => {
+  const id = filePath.split('\\').pop().split('/').pop().split('.docx')[0];
   fs.readFile(filePath, (err, data) => {
     if (err) {
       event.reply("file-data", { success: false, message: err.message });
@@ -96,6 +97,7 @@ ipcMain.on("read-file", (event, filePath) => {
     }
   });
 });
+
 
 ipcMain.handle("getTemplates", (event, name, value) => {
   return fileManager.getTemplates();
@@ -153,10 +155,10 @@ async function processDocx(docxFilePath, data) {
       }
 
       const hyperlinks = findTags(result, 'w:hyperlink');
-      
+
       hyperlinks.forEach(link => {
         const anchor = link[0]["$"]["w:anchor"]
-       
+
       });
     });
 
