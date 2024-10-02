@@ -2,17 +2,20 @@ const fs = require("fs");
 const { JSDOM } = require("jsdom");
 const JSZip = require("jszip");
 const path = require("path");
-const os = require("os")
+const os = require("os");
+import dayjs from "dayjs";
+import 'dayjs/locale/ru'
+import updateLocale from 'dayjs/plugin/updateLocale'
 
-const { shell } = require('electron');
+const { shell } = require("electron");
 const { Notification } = require("electron");
 
 /**
- * 
+ *
  * generateOutputDOCX - to large function to analyze data and fills document with placeholders
- * 
+ *
  * In the next updates, needs to rewrite func to class
- * 
+ *
  * @param {*} inputDocxPath - template DOCX path
  * @param {*} replacements - cleared RawData
  * @param {*} rawData - raw fields from front end
@@ -23,7 +26,7 @@ export default async function generateOutputDOCX(
   replacements,
   rawData
 ) {
-  console.log(replacements)
+  console.log(replacements);
   /**
    *  Loading DOCX => XML file
    */
@@ -41,12 +44,12 @@ export default async function generateOutputDOCX(
     if (anchor) {
       try {
         /**
-         * Gets cleanedAnchor 
+         * Gets cleanedAnchor
          */
 
         /**
-         * TODO if date 
-         * 
+         * TODO if date
+         *
          * dayjs.locale('ru');
          * dayjs.extend(updateLocale)
          * dayjs.updateLocale('ru', {
@@ -62,15 +65,44 @@ export default async function generateOutputDOCX(
           .replace(/:(text|date|number|select).*$/, "")
           .replace(":", ".");
         /**
-        * Try to find cleanedAnchor in DOCX
-        */
+         * Try to find cleanedAnchor in DOCX
+         */
+
+        console.log(anchor);
         if (replacements.hasOwnProperty(cleanedAnchor)) {
           console.log("Find:", cleanedAnchor);
           // Replacing text in nodes w:t
           const textNodes = hyperlink.getElementsByTagName("w:t");
-          for (let textNode of textNodes) {
-            textNode.textContent = replacements[cleanedAnchor];
+          if (anchor.endsWith(":date")) {
+            dayjs.locale("ru");
+            dayjs.extend(updateLocale);
+            dayjs.updateLocale("ru", {
+              months: [
+                "января",
+                "февраля",
+                "марта",
+                "апреля",
+                "мая",
+                "июня",
+                "июля",
+                "августа",
+                "сентября",
+                "октября",
+                "ноября",
+                "декабря",
+              ],
+            });
+            
+            for (let textNode of textNodes) {
+              textNode.textContent = dayjs(replacements[cleanedAnchor]).format("«DD» MMMM YYYY");
+            }
           }
+          else{
+            for (let textNode of textNodes) {
+              textNode.textContent = cleanedAnchor;
+            }
+          }
+          
           /**
            * Deleting the w:rStyle node, if it exists (to remove link decoration in DOCX file)
            */
@@ -88,8 +120,8 @@ export default async function generateOutputDOCX(
               }
             }
           } catch (err) {
-            console.log("Delete w:rStyle ERROR")
-            console.error(err)
+            console.log("Delete w:rStyle ERROR");
+            console.error(err);
           }
 
           /**
@@ -106,12 +138,12 @@ export default async function generateOutputDOCX(
             }
             parent.removeChild(hyperlink); // Deleting the w:hyperlink tag itself
           } catch (err) {
-            console.log("Delete w:hyperlink ERROR")
-            console.error(err)
+            console.log("Delete w:hyperlink ERROR");
+            console.error(err);
           }
         }
       } catch (err) {
-        console.error(err)
+        console.error(err);
       }
     }
   }
@@ -127,24 +159,29 @@ export default async function generateOutputDOCX(
 
   /**
    * @HARDCODE
-   * 
+   *
    * If you need to make your own `documentName` logic rewrite section below.
    * MB in next updates we'll make it in options tab, using vars and regular expressions, and there won't be hard code
    */
   let documentName = "";
 
   if (rawData["Документ"]["Номер документа"].value > 1) {
-    console.log(inputDocxPath.split('\\').pop().split('/').pop());
-    documentName = inputDocxPath.split('\\').pop().split('/').pop().split('.docx')[0] + "_" + rawData["Документ"]["Номер документа"].value + ".docx"
+    console.log(inputDocxPath.split("\\").pop().split("/").pop());
+    documentName =
+      inputDocxPath.split("\\").pop().split("/").pop().split(".docx")[0] +
+      "_" +
+      rawData["Документ"]["Номер документа"].value +
+      ".docx";
   } else {
-    documentName = inputDocxPath.split('\\').pop().split('/').pop() + "_" + Date() + ".docx"
+    documentName =
+      inputDocxPath.split("\\").pop().split("/").pop() + "_" + Date() + ".docx";
   }
 
   /**
    * @HARDCODE
-   * 
+   *
    * Configure export path to base OS Document Dir
-   * If you need to make your dist to export rewrite section below.   
+   * If you need to make your dist to export rewrite section below.
    */
   // const outputDocxPath = path.join(
   //   os.homedir(),
@@ -155,9 +192,9 @@ export default async function generateOutputDOCX(
 
   /**
    * @HARDCODE
-   * 
-   * Configure export path to base OneDrive Document Dir (RU OneDrive version)   
-   * If you need to make your dist to export rewrite section below.   
+   *
+   * Configure export path to base OneDrive Document Dir (RU OneDrive version)
+   * If you need to make your dist to export rewrite section below.
    */
   const outputDocxPathOneDrive = path.join(
     os.homedir(),
@@ -180,15 +217,17 @@ export default async function generateOutputDOCX(
   //console.log("DOCX saved at:", outputDocxPath);
   console.log("DOCX saved at:", outputDocxPathOneDrive);
 
-  const NOT_TITLE = `Документ ${documentName} создан!`
-  const NOT_MESSAGE = "Нажмите на уведомление, что бы открыть."
+  const NOT_TITLE = `Документ ${documentName} создан!`;
+  const NOT_MESSAGE = "Нажмите на уведомление, что бы открыть.";
 
-  const notification = new Notification({ title: NOT_TITLE, body: NOT_MESSAGE })
-  notification.show()
-  notification.on('click', (event, arg) => {
+  const notification = new Notification({
+    title: NOT_TITLE,
+    body: NOT_MESSAGE,
+  });
+  notification.show();
+  notification.on("click", (event, arg) => {
     shell.showItemInFolder(outputDocxPathOneDrive);
-  })
-
+  });
 
   const outputOneDriveDir = path.join(
     os.homedir(),
@@ -196,6 +235,5 @@ export default async function generateOutputDOCX(
     "Документы",
     "DTF export"
   );
-  return outputOneDriveDir
-
+  return outputOneDriveDir;
 }

@@ -17,20 +17,29 @@ import PopupD from "./components/documentsPopup";
 import $ from "jquery";
 //dayjs - to manipulate date render
 import dayjs from "dayjs";
-import 'dayjs/locale/ru'
-import updateLocale from 'dayjs/plugin/updateLocale'
-
+import "dayjs/locale/ru";
+import updateLocale from "dayjs/plugin/updateLocale";
 
 const Editor = () => {
   //dayjs - config
-  dayjs.locale('ru');
-  dayjs.extend(updateLocale)
-  dayjs.updateLocale('ru', {
+  dayjs.locale("ru");
+  dayjs.extend(updateLocale);
+  dayjs.updateLocale("ru", {
     months: [
-      "января", "февраля", "марта", "апреля", "мая", "июня", "июля",
-      "августа", "сентября", "октября", "ноября", "декабря"
-    ]
-  })
+      "января",
+      "февраля",
+      "марта",
+      "апреля",
+      "мая",
+      "июня",
+      "июля",
+      "августа",
+      "сентября",
+      "октября",
+      "ноября",
+      "декабря",
+    ],
+  });
   const curDocName = useSelector((state) => state.CurDoc.name);
   const curDocPath = useSelector((state) => state.CurDoc.path);
   const docSerName = useSelector((state) => state.DocSer.name);
@@ -39,9 +48,7 @@ const Editor = () => {
 
   const navigate = useNavigate();
   if (!curDocPath) {
-
     navigate("/");
-
   }
 
   const dispatch = useDispatch();
@@ -50,6 +57,8 @@ const Editor = () => {
   const [loading, setLoading] = useState(true);
   const [loadingColor, setLoadingColor] = useState("#FF6600");
   const [loadingBGColor, setLoadingBGColor] = useState("#222222");
+  const [pendingUpdateLogicFields, setpendingUpdateLogicFields] = useState(false)
+
 
   const loadDocs = () => {
     useEffect(() => {
@@ -106,7 +115,11 @@ const Editor = () => {
                 }
               } else {
                 setLoadingColor("#FF0000");
-                alert("FATAL ERROR: read-file-sync. Press CTRL + R", "Error message: ", data.message);
+                alert(
+                  "FATAL ERROR: read-file-sync. Press CTRL + R",
+                  "Error message: ",
+                  data.message
+                );
                 console.error(data.message);
               }
             });
@@ -146,7 +159,9 @@ const Editor = () => {
           .map((option) => {
             options.push(option);
           });
-
+      } else if (fieldType.split("/")[0] == "logic") {
+        finalFieldType = "logic";
+        options.push(fieldType.split("/")[1]);
       }
 
       if (header === "#DTF") {
@@ -173,6 +188,10 @@ const Editor = () => {
     setLoading(false);
   };
 
+  useEffect(() => {
+    update_document();
+  }, [fields]);
+
   const update_document = () => {
     let $preview_container = $("#docx_container_preview");
     let $links_array = $preview_container.find("a");
@@ -196,7 +215,7 @@ const Editor = () => {
         fields[groupName][fieldName]
       ) {
         const newValue = fields[groupName][fieldName].value;
-        if (fieldType === 'date') {
+        if (fieldType === "date") {
           $(element).text(dayjs(newValue).format("«DD» MMMM YYYY"));
         } else {
           $(element).text(newValue);
@@ -211,13 +230,15 @@ const Editor = () => {
 
   const handleChange = (event) => {
     update_document();
+    
     const { name, value } = event.target;
 
     var parts = name.split(":");
     const groupName = parts[0];
     const fieldName = parts[1];
-
-    setFields((prevFields) => {
+    
+    console.log(pendingUpdateLogicFields)
+    const fileds = setFields((prevFields) => {
       const updatedFields = {
         ...prevFields,
         [groupName]: {
@@ -228,13 +249,79 @@ const Editor = () => {
           },
         },
       };
-
+      setpendingUpdateLogicFields(updatedFields)
       dispatch(setDocSerFields(updatedFields));
 
       return updatedFields;
     });
 
     update_document();
+  };
+
+  useEffect(() => {
+    if (pendingUpdateLogicFields) {
+      console.log("true");
+      updateLogicFields(pendingUpdateLogicFields);
+
+    } else {
+      console.log("false");
+    }
+  }, [pendingUpdateLogicFields]);
+
+  const updateLogicFields = (newFields) => {
+    setpendingUpdateLogicFields(false)
+    console.log(
+      "updateLogicFields updateLogicFields updateLogicFields updateLogicFields"
+    );
+    console.log(newFields);
+    Object.entries(newFields).map(([group, fields], index) => {
+      Object.entries(fields).map(([name, field], index) => {
+        if (field.type == "logic") {
+          const regEx = /\[([^\[\]]+?\$\$\$\$[^\[\]]+?)\]/g;
+          let items = [];
+          let item;
+          while ((item = regEx.exec(field.options[0])) != null) {
+            items.push(item[1]);
+          }
+          let updatedString = field.options[0];
+          items.forEach((item) => {
+            const itemData = item.split("$$$$");
+            const group = itemData[0];
+            const field = itemData[1];
+            const itemValue = newFields[group][field].value;
+            console.log(itemValue.length);
+            updatedString = updatedString.replace(
+              new RegExp(`\\[(${group}\\$\\$\\$\\$${field})\\]`, "g"),
+              `"${itemValue}"`
+            );
+          });
+          console.log(updatedString);
+          updatedString = `const func = () => {${updatedString}}; func()`;
+          let result = eval(updatedString);
+          try {
+            result = eval(updatedString);
+          } catch (error) {
+            console.error(error);
+          }
+          setFields((prevFields) => {
+            const updatedFields = {
+              ...prevFields,
+              [group]: {
+                ...prevFields[group],
+                [name]: {
+                  ...prevFields[group][name],
+                  value: result,
+                },
+              },
+            };
+
+            dispatch(setDocSerFields(updatedFields));
+            update_document();
+            return updatedFields;
+          });
+        }
+      });
+    });
   };
 
   const handleClick = (event) => {
