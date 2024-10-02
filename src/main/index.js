@@ -1,19 +1,19 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-
-const path = require("path");
 const fs = require("fs");
+
+const { Notification } = require("electron");
 
 import Options from "./core/options";
 const options = new Options();
 
 import FileManager from "./core/filemanager";
-import replaceHyperlinksInDocxAndConvertToPdf from "./core/pdf_exporter";
+import generateOutputDOCX from "./core/docx_exporter";
 const fileManager = new FileManager(options);
 
 /**
- * Создание главного экрана приложения
+ * Main win init
  */
 let mainWindow;
 
@@ -65,14 +65,23 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
+/**
+ * Handler to ping request from front
+ */
 ipcMain.handle("ping", () => console.log("pong"));
 
+/**
+ * Quit app, when all windows closed
+ */
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
+/**
+ * Options api handler - gets any option from Options class 
+ */
 ipcMain.handle("getOption", (event, name) => {
   if (options.issetOption(name) !== false) {
     return options.getOption(name);
@@ -80,10 +89,16 @@ ipcMain.handle("getOption", (event, name) => {
     return false;
   }
 });
+/**
+ * Options api handler - sets any option to Options class 
+ */
 ipcMain.handle("setOption", (event, name, value) => {
   return options.setOption(name, value);
 });
 
+/**
+ * @deprecated on, now use handle("read-file-sync"...)
+ */
 ipcMain.on("read-file", (event, filePath) => {
   const id = filePath.split("\\").pop().split("/").pop().split(".docx")[0];
   fs.readFile(filePath, (err, data) => {
@@ -95,119 +110,49 @@ ipcMain.on("read-file", (event, filePath) => {
   });
 });
 
+/**
+ * Read any file on PC => :Buffer
+ */
 ipcMain.handle("read-file-sync", (event, filePath) => {
-  const id = filePath.split("\\").pop().split("/").pop().split(".docx")[0];
   const data = fs.readFileSync(filePath);
   return { success: true, content: data };
 });
 
+/**
+ * Retrieve all templates founded in configured dir => :Object
+ */
 ipcMain.handle("getTemplates", (event, name, value) => {
   return fileManager.getTemplates();
 });
+/**
+ * Retrieve all templates series founded in configured dir => :Object
+ */
 ipcMain.handle("getSeries", (event, name, value) => {
   return fileManager.getSeries();
 });
 
-const fillTemplate = (templatePath, data, outputPath) => {
-  console.log(data);
-  const content = fs.readFileSync(templatePath, "binary");
+/**
+ * Retrieve all templates series founded in configured dir => :Object
+ */
+ipcMain.handle("showNotification", (event, title, message, onClickEval) => {
+  const notification = new Notification({ title: title, body: message })
+  notification.show()
+  notification.on('click', (event, arg) => {
+    eval(onClickEval)
+  })
+});
 
-  const zip = new PizZip(content);
-  const doc = new Docxtemplater(zip, {
-    paragraphLoop: true,
-    linebreaks: true,
-  });
-  doc.setData({
-    "Название котла": "Новое значение",
-  });
-
-  try {
-    doc.render();
-
-    const buf = doc.getZip().generate({ type: "nodebuffer" });
-
-    fs.writeFileSync(outputPath, buf);
-    console.log("File has been generated successfully!");
-  } catch (error) {
-    console.error("Error occurred:", error);
-  }
-};
-
-const convertToPdf = (docxPath, pdfPath) => {
-  docxToPdf(docxPath, pdfPath, (err, result) => {
-    if (err) {
-      console.error("Error converting to PDF:", err);
-    } else {
-      console.log("PDF successfully generated:", result);
-    }
-  });
-};
-
-async function processDocx(docxFilePath, data) {
-  try {
-    const zip = new JSZip();
-    const buffer = fs.readFileSync(docxFilePath);
-    const zipContent = await zip.loadAsync(buffer);
-    const xml = await zipContent.file("word/document.xml").async("string");
-
-    xml2js.parseString(xml, (err, result) => {
-      if (err) {
-        console.error("������ �������� XML:", err);
-        return;
-      }
-
-      const hyperlinks = findTags(result, "w:hyperlink");
-
-      hyperlinks.forEach((link) => {
-        const anchor = link[0]["$"]["w:anchor"];
-      });
-    });
-
-    for (const [templateField, newValue] of Object.entries(data)) {
-      console.log(templateField, newValue);
-      const xmlField = templateField.replace(/\./g, ":");
-      const regex = new RegExp(
-        `<w:hyperlink[^>]*w:anchor="${xmlField}"[^>]*>`,
-        "g"
-      );
-      xml = xml.replace(regex, newValue);
-    }
-
-    zipContent.file("word/document.xml", xml);
-
-    const outputBuffer = await zipContent.generateAsync({ type: "nodebuffer" });
-    fs.writeFileSync(
-      "C:/Users/vanya/Desktop/updated_document.docx",
-      outputBuffer
-    );
-
-    console.log("����������� ���� �������� ��� updated_document.docx");
-  } catch (error) {
-    console.error("������ ��������� ����� .docx:", error);
-  }
-}
-
-function findTags(obj, tagName) {
-  let results = [];
-  if (typeof obj === "object") {
-    for (let key in obj) {
-      if (key === tagName) {
-        results.push(obj[key]);
-      } else if (typeof obj[key] === "object") {
-        results = results.concat(findTags(obj[key], tagName));
-      }
-    }
-  }
-  return results;
-}
+/**
+ * Starts generate export docx file with new data
+ */
 ipcMain.handle(
-  "generate-pdf",
-  async (event, { templatePath, data, rawData, outputDocxPath }) => {
+  "generate-docx",
+  async (event, { templatePath, data, rawData}) => {
     try {
-      replaceHyperlinksInDocxAndConvertToPdf(templatePath, data, rawData);
-      return { success: true, outputPath: outputDocxPath };
+      const outputDocxDir = generateOutputDOCX(templatePath, data, rawData);
+      return { success: true, outputDir: outputDocxDir};
     } catch (error) {
-      console.error("Error generating PDF:", error);
+      console.error("Error generating DOCX:", error);
       return { success: false, error };
     }
   }

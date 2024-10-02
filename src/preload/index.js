@@ -33,6 +33,9 @@ if (process.contextIsolated) {
   window.api = api
 }
 
+/**
+ * @deprecated on, now use handle("read-file-sync"...)
+ */
 contextBridge.exposeInMainWorld('electronAPI', {
   readFile: (filePath) => ipcRenderer.send('read-file', filePath),
   onFileData: (callback) => ipcRenderer.on('file-data', (event, data) => callback(data))

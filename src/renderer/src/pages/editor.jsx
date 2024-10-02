@@ -15,8 +15,22 @@ import Popup from "./components/popup";
 import PopupD from "./components/documentsPopup";
 
 import $ from "jquery";
+//dayjs - to manipulate date render
+import dayjs from "dayjs";
+import 'dayjs/locale/ru'
+import updateLocale from 'dayjs/plugin/updateLocale'
+
 
 const Editor = () => {
+  //dayjs - config
+  dayjs.locale('ru');
+  dayjs.extend(updateLocale)
+  dayjs.updateLocale('ru', {
+    months: [
+      "января", "февраля", "марта", "апреля", "мая", "июня", "июля",
+      "августа", "сентября", "октября", "ноября", "декабря"
+    ]
+  })
   const curDocName = useSelector((state) => state.CurDoc.name);
   const curDocPath = useSelector((state) => state.CurDoc.path);
   const docSerName = useSelector((state) => state.DocSer.name);
@@ -25,7 +39,9 @@ const Editor = () => {
 
   const navigate = useNavigate();
   if (!curDocPath) {
+
     navigate("/");
+
   }
 
   const dispatch = useDispatch();
@@ -34,10 +50,6 @@ const Editor = () => {
   const [loading, setLoading] = useState(true);
   const [loadingColor, setLoadingColor] = useState("#FF6600");
   const [loadingBGColor, setLoadingBGColor] = useState("#222222");
-  const [documentsContent, setDocumentsContent] = useState({});
-
-  let DataProcessState = 0;
-  let taskManagerState = 0;
 
   const loadDocs = () => {
     useEffect(() => {
@@ -94,66 +106,19 @@ const Editor = () => {
                 }
               } else {
                 setLoadingColor("#FF0000");
+                alert("FATAL ERROR: read-file-sync. Press CTRL + R", "Error message: ", data.message);
                 console.error(data.message);
               }
             });
-          // window.electronAPI.onFileData((data) => {});
         }
       } else {
+        alert("FATAL ERROR: electronAPI is undefined");
         console.error("electronAPI is undefined");
       }
     }, []);
   };
 
   loadDocs();
-  useEffect(() => {
-    if (docSerPaths.length === DataProcessState) {
-      renderPreview();
-    }
-  }, [documentsContent]);
-
-  const renderPreview = async () => {
-    for (let i = 0; i < docSerPaths.length; i++) {
-      const docSerPath = docSerPaths[i];
-      const documentContent = documentsContent[docSerPath];
-      let dataName = docSerPath
-        .split("\\")
-        .pop()
-        .split("/")
-        .pop()
-        .split(".docx")[0];
-
-      const options = {
-        inWrapper: true,
-        ignoreWidth: false,
-        ignoreHeight: true,
-        experimental: true,
-        renderChanges: false,
-        breakPages: true,
-        renderChanges: true,
-      };
-      await docx
-        .renderAsync(
-          documentContent,
-          document.getElementById(dataName),
-          null,
-          options
-        )
-        .then(() => {
-          taskManagerState++;
-        });
-
-      if (docSerPaths.length === taskManagerState) {
-        setLoadingColor("#FFFF00");
-        load_placeholder();
-
-        update_document();
-        setLoadingBGColor("#FFFFFF");
-        setLoading(false);
-      }
-    }
-  };
-
   const load_placeholder = () => {
     const $preview_container = $("#docx_container_preview");
     const $links_array = $preview_container.find("a");
@@ -231,7 +196,11 @@ const Editor = () => {
         fields[groupName][fieldName]
       ) {
         const newValue = fields[groupName][fieldName].value;
-        $(element).text(newValue);
+        if (fieldType === 'date') {
+          $(element).text(dayjs(newValue).format("«DD» MMMM YYYY"));
+        } else {
+          $(element).text(newValue);
+        }
       }
     });
   };
@@ -273,11 +242,6 @@ const Editor = () => {
     handleGenerateDocx();
   };
 
-  // useEffect(() => {
-  //     console.log("redux docSerFields:");
-  //     console.log(docSerFields);
-  // }, [docSerFields]);
-
   const updater = () => {
     setTimeout(function () {
       update_document();
@@ -298,26 +262,25 @@ const Editor = () => {
 
   const handleGenerateDocx = async () => {
     const data = prepareData(docSerFields);
-
     const rawData = docSerFields;
-
     docSerPaths.map((value, index) => {
       const templatePath = docSerPaths[index];
       window.electron.ipcRenderer
-        .invoke("generate-pdf", {
+        .invoke("generate-docx", {
           templatePath,
           data,
           rawData,
         })
         .then((result) => {
           if (result.success) {
-            console.log("PDF successfully generated at:", result.pdfPath);
+            console.log("DOCX successfully generated at:", result.outputDir);
           } else {
-            console.error("Error generating PDF:", result.error);
+            alert("Error generating DOCX:", result.error);
+            console.error("Error generating DOCX:", result.error);
           }
         })
         .catch((error) => {
-          console.error("Failed to generate PDF:", error);
+          console.error("Failed to invoke generate-docx:", error);
         });
     });
   };

@@ -12,7 +12,7 @@ const DocSerSlice = createSlice({
   reducers: {
     setDocSerName(state, action) {
       state.name = action.payload;
-    }, 
+    },
     setDocSerPath(state, action) {
       state.paths.push(action.payload);
     },
@@ -22,9 +22,14 @@ const DocSerSlice = createSlice({
         ...state.fields,
         ...action.payload
       };
+    },
+    clearDocSer(state, action) {
+      state.fields = {};
+      state.paths = [];
+      state.name = '';
     }
-  },
+  }
 });
 
-export const { setDocSerName, setDocSerFields, setDocSerPath } = DocSerSlice.actions;
+export const { setDocSerName, setDocSerFields, setDocSerPath, clearDocSer } = DocSerSlice.actions;
 export default DocSerSlice.reducer;
