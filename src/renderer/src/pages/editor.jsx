@@ -4,6 +4,8 @@ import * as docx from "docx-preview";
 import { useSelector, useDispatch } from "react-redux";
 import { setDocSerFields } from "../store/DocSerSlice";
 
+import debounce from 'lodash.debounce'
+
 import { useNavigate } from "react-router-dom";
 
 import CircularProgress, {
@@ -183,14 +185,10 @@ const Editor = () => {
       ...updatedFields,
     }));
 
-    update_document();
     setLoadingBGColor("#FFFFFF");
     setLoading(false);
   };
 
-  useEffect(() => {
-    update_document();
-  }, [fields]);
 
   const update_document = () => {
     let $preview_container = $("#docx_container_preview");
@@ -224,12 +222,12 @@ const Editor = () => {
     });
   };
 
-  useEffect(() => {
+  const DebounceUpdateLogicFields = debounce((updatedFields) => {
+    updateLogicFields(updatedFields);
     update_document();
-  }, [fields]);
+  }, 0)
 
   const handleChange = (event) => {
-    update_document();
     
     const { name, value } = event.target;
 
@@ -237,7 +235,6 @@ const Editor = () => {
     const groupName = parts[0];
     const fieldName = parts[1];
     
-    console.log(pendingUpdateLogicFields)
     const fileds = setFields((prevFields) => {
       const updatedFields = {
         ...prevFields,
@@ -249,24 +246,33 @@ const Editor = () => {
           },
         },
       };
-      setpendingUpdateLogicFields(updatedFields)
       dispatch(setDocSerFields(updatedFields));
-
+      DebounceUpdateLogicFields(updatedFields)
       return updatedFields;
+      update_document();
     });
 
-    update_document();
   };
 
   useEffect(() => {
-    if (pendingUpdateLogicFields) {
-      console.log("true");
-      updateLogicFields(pendingUpdateLogicFields);
+    update_document();
+  }, [fields])
 
-    } else {
-      console.log("false");
+  // useEffect(() => {
+  //   if (pendingUpdateLogicFields) {
+  //     console.log("true");
+  //     updateLogicFields(pendingUpdateLogicFields);
+
+  //   } else {
+  //     console.log("false");
+  //   }
+  // }, [pendingUpdateLogicFields]);
+
+  useEffect(() => {
+    return () => {
+      DebounceUpdateLogicFields.cancel();
     }
-  }, [pendingUpdateLogicFields]);
+  }, [])
 
   const updateLogicFields = (newFields) => {
     setpendingUpdateLogicFields(false)
@@ -329,12 +335,12 @@ const Editor = () => {
     handleGenerateDocx();
   };
 
-  const updater = () => {
-    setTimeout(function () {
-      update_document();
-      updater();
-    }, 500);
-  };
+  // const updater = () => {
+  //   setTimeout(function () {
+  //     update_document();
+  //     updater();
+  //   }, 500);
+  // };
 
   const prepareData = (fields) => {
     let preparedData = {};

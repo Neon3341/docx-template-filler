@@ -62,7 +62,7 @@ export default async function generateOutputDOCX(
          */
         const cleanedAnchor = anchor
           .replace(/^DTF:/, "")
-          .replace(/:(text|date|number|select).*$/, "")
+          .replace(/:(text|date|number|select|logic).*$/, "")
           .replace(":", ".");
         /**
          * Try to find cleanedAnchor in DOCX
@@ -99,7 +99,7 @@ export default async function generateOutputDOCX(
           }
           else{
             for (let textNode of textNodes) {
-              textNode.textContent = cleanedAnchor;
+              textNode.textContent = replacements[cleanedAnchor];
             }
           }
           
