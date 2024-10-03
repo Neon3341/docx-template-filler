@@ -11,7 +11,7 @@ const inputSection = ({ data, onChange }) => {
 
                         return (
                             <div className="inputs-group">
-                                <Title fontSize="18px" fontWeight="500" text={key} />
+                                <Title fontSize="18px" text={key} />
                                 <InputGroup data={value} onChange={onChange} />
                             </div>
                         )

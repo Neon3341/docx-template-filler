@@ -24,6 +24,7 @@ export default function SelectLabels({
           value={currentValue}
           label={slabel}
           onChange={sonChange}
+          className="selector"
         >
           <MenuItem value={""}>
             <em>None</em>

@@ -31,5 +31,12 @@
         overflow: hidden;
         height: fit-content;
     }
+    fieldset {
+        height: auto;
+        width: 100%;
+    }
 
+    selector{
+        width: 100%;
+    }
 }

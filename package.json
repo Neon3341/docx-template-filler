@@ -1,6 +1,6 @@
 {
   "name": "docx-template-filler",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Fills docx templates",
   "main": "./out/main/index.js",
   "author": "Neon3341",
@@ -57,6 +57,7 @@
     "electron-updater": "^6.1.8",
     "jquery": "^3.7.1",
     "jsdom": "^25.0.1",
+    "lodash.debounce": "^4.0.8",
     "mammoth": "^1.8.0",
     "pizzip": "^3.1.7",
     "puppeteer": "^23.4.1",
